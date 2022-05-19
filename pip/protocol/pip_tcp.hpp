@@ -147,9 +147,6 @@ private:
     
     /// 当前是否等待确认PUSH包
     bool _is_wait_push_ack;
-
-    /// 当前是否接受到对方的PUSH包
-    bool _is_received_push;
     
     /// 主动关闭时间 定期检查 防止客户端不响应ACK 导致资源占用
     pip_uint64 _fin_time;

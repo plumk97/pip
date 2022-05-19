@@ -57,7 +57,6 @@ pip_tcp::pip_tcp() {
     
     this->_last_ack = 0;
     this->_is_wait_push_ack = false;
-    this->_is_received_push = false;
     
     this->connected_callback = NULL;
     this->closed_callback = NULL;
@@ -321,15 +320,7 @@ void pip_tcp::received(pip_uint16 len) {
     }
     
     this->wind = PIP_MIN(this->wind + len, PIP_TCP_WIND);
-    if (this->wind - len <= 0 && len > 0) {
-        /// 当前窗口 <= 0，直接发送ack 更新窗口
-        this->send_ack();
-        
-    } else if (this->_is_received_push && this->ack > this->_last_ack) {
-        /// 接受到push包 回复之前接受到的数据
-        this->_is_received_push = false;
-        this->send_ack();
-    }
+    this->send_ack();
 }
 
 void pip_tcp::debug_status() {
@@ -564,7 +555,6 @@ void pip_tcp::handle_fin() {
 }
 
 void pip_tcp::handle_push(void *data, pip_uint16 datalen) {
-    this->_is_received_push = true;
     this->handle_receive(data, datalen);
     
 }
