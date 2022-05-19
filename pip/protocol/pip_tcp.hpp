@@ -74,14 +74,23 @@ public:
     pip_tcp_written_callback written_callback;
     
 public:
+    
+    /// ip信息
     pip_ip_header * ip_header;
     
+    /// 源端口
     pip_uint16 src_port;
+    
+    /// 目标端口
     pip_uint16 dest_port;
     
+    /// 当前链接状态
     pip_tcp_status status;
     
+    /// 当前发送序号
     pip_uint32 seq;
+    
+    /// 当前回复对方的ack
     pip_uint32 ack;
     
     /// mss
@@ -133,12 +142,15 @@ private:
     /// 当前连接标识
     pip_uint32 _iden;
     
-    /// 最后一次ack
+    /// 最后一次回复ack
     pip_uint32 _last_ack;
     
     /// 当前是否等待确认PUSH包
     bool _is_wait_push_ack;
 
+    /// 当前是否接受到对方的PUSH包
+    bool _is_received_push;
+    
     /// 主动关闭时间 定期检查 防止客户端不响应ACK 导致资源占用
     pip_uint64 _fin_time;
 };
