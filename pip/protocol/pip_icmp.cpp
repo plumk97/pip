@@ -9,16 +9,9 @@
 #include "pip_debug.hpp"
 
 
-void pip_icmp::input(const void *bytes, struct ip *ip) {
+void pip_icmp::input(const void *bytes, pip_ip_header *ip_data) {
     
-    
-    
-    char * src_ip = (char *)calloc(15, sizeof(char));
-    char * dest_ip = (char *)calloc(15, sizeof(char));
-    strcpy(src_ip, inet_ntoa(ip->ip_src));
-    strcpy(dest_ip, inet_ntoa(ip->ip_dst));
-    
-    pip_uint16 datalen = htons(ip->ip_len) - ip->ip_hl * 4;
+    pip_uint16 datalen = ip_data->datalen - ip_data->headerlen;
     
 #if PIP_DEBUG
     struct icmp *hdr = (struct icmp *)bytes;
@@ -27,9 +20,21 @@ void pip_icmp::input(const void *bytes, struct ip *ip) {
     
     pip_netif * netif = pip_netif::shared();
     if (netif->received_icmp_data_callback) {
-        netif->received_icmp_data_callback(netif, (void *)bytes, datalen, src_ip, dest_ip);
+        netif->received_icmp_data_callback(netif, (void *)bytes, datalen, ip_data->src_str, ip_data->dest_str, ip_data->ttl);
     }
     
-    free(src_ip);
-    free(dest_ip);
+    delete ip_data;
+}
+
+
+void pip_icmp::output(const void *buffer, pip_uint16 buffer_len, const char * src_ip, const char * dest_ip) {
+    
+    pip_buf * payload_buf = new pip_buf((void *)buffer, buffer_len, 0);
+    
+    in_addr_t src_addr = inet_addr(src_ip);
+    in_addr_t dest_addr = inet_addr(dest_ip);
+    
+    pip_netif::shared()->output(payload_buf, IPPROTO_ICMP, ntohl(src_addr), ntohl(dest_addr));
+    delete payload_buf;
+    
 }

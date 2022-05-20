@@ -37,7 +37,7 @@ typedef void (*pip_netif_new_tcp_connect_callback) (pip_netif * netif, pip_tcp *
 typedef void (*pip_netif_received_udp_data_callback) (pip_netif * netif, void * buffer, pip_uint16 buffer_len, const char * src_ip, pip_uint16 src_port, const char * dest_ip, pip_uint16 dest_port, pip_uint8 version);
 
 // 接受到ICMP数据
-typedef void (*pip_netif_received_icmp_data_callback) (pip_netif * netif, void * buffer, pip_uint16 buffer_len, const char * src_ip, const char * dest_ip);
+typedef void (*pip_netif_received_icmp_data_callback) (pip_netif * netif, void * buffer, pip_uint16 buffer_len, const char * src_ip, const char * dest_ip, pip_uint8 ttl);
 
 
 class pip_netif {

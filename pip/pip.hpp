@@ -11,4 +11,5 @@
 #include "pip_checksum.hpp"
 #include "pip_tcp.hpp"
 #include "pip_udp.hpp"
+#include "pip_icmp.hpp"
 #endif /* pip_h */

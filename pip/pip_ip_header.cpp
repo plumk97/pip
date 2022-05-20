@@ -15,6 +15,7 @@ pip_ip_header::pip_ip_header(const void * bytes) {
         this->version = 4;
         this->protocol = hdr->ip_p;
         this->has_options = hdr->ip_hl > 5;
+        this->ttl = hdr->ip_ttl;
         this->headerlen = hdr->ip_hl * 4;
         this->datalen = ntohs(hdr->ip_len);
         

@@ -24,6 +24,9 @@ public:
     /// ipv4 是否有可选项
     pip_uint8 has_options;
     
+    /// ttl
+    pip_uint8 ttl;
+    
     /// 头部长度
     pip_uint16 headerlen;
     

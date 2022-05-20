@@ -75,6 +75,10 @@ void pip_netif::input(const void *buffer) {
             pip_tcp::input(data, ip_header);
             break;
             
+        case IPPROTO_ICMP:
+            pip_icmp::input(data, ip_header);
+            break;
+            
         default:
             delete ip_header;
             break;
