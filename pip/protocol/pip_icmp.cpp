@@ -11,7 +11,7 @@
 
 void pip_icmp::input(const void *bytes, pip_ip_header *ip_data) {
     
-    pip_uint16 datalen = ip_data->datalen - ip_data->headerlen;
+    pip_uint16 datalen = ip_data->datalen;
     
 #if PIP_DEBUG
     struct icmp *hdr = (struct icmp *)bytes;
