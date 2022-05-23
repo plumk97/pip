@@ -39,14 +39,14 @@ pip_uint16 pip_ip_checksum(const void * payload, int len) {
 }
 
 
-pip_uint16 pip_inet_checksum(const void * payload, pip_uint8 proto, pip_uint32 src, pip_uint32 dest, pip_uint16 len) {
+pip_uint16 pip_inet_checksum(const void * payload, pip_uint8 proto, pip_uint32 src, pip_uint32 dst, pip_uint16 len) {
     pip_uint32 sum = 0;
     sum += ((pip_uint32)src & 0xFFFF0000) >> 16;
     sum += ((pip_uint32)src & 0x00000FFFF) >> 0;
     pip_fold_uint32(sum);
     
-    sum += ((pip_uint32)dest & 0xFFFF0000) >> 16;
-    sum += ((pip_uint32)dest & 0x00000FFFF) >> 0;
+    sum += ((pip_uint32)dst & 0xFFFF0000) >> 16;
+    sum += ((pip_uint32)dst & 0x00000FFFF) >> 0;
     pip_fold_uint32(sum);
     
     sum += proto;
@@ -60,14 +60,14 @@ pip_uint16 pip_inet_checksum(const void * payload, pip_uint8 proto, pip_uint32 s
 }
 
 
-pip_uint16 pip_inet_checksum_buf(pip_buf * buf, pip_uint8 proto, pip_uint32 src, pip_uint32 dest) {
+pip_uint16 pip_inet_checksum_buf(pip_buf * buf, pip_uint8 proto, pip_uint32 src, pip_uint32 dst) {
     pip_uint32 sum = 0;
     sum += ((pip_uint32)src & 0xFFFF0000) >> 16;
     sum += ((pip_uint32)src & 0x00000FFFF) >> 0;
     pip_fold_uint32(sum);
     
-    sum += ((pip_uint32)dest & 0xFFFF0000) >> 16;
-    sum += ((pip_uint32)dest & 0x00000FFFF) >> 0;
+    sum += ((pip_uint32)dst & 0xFFFF0000) >> 16;
+    sum += ((pip_uint32)dst & 0x00000FFFF) >> 0;
     pip_fold_uint32(sum);
     
     sum += proto;

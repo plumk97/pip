@@ -5,7 +5,7 @@
 //
 
 #include "pip_ip_header.hpp"
-
+#include "pip_debug.hpp"
 
 pip_ip_header::pip_ip_header(const void * bytes) {
     
@@ -19,20 +19,23 @@ pip_ip_header::pip_ip_header(const void * bytes) {
         this->headerlen = hdr->ip_hl * 4;
         this->datalen = ntohs(hdr->ip_len);
         
-        this->src = ntohl(hdr->ip_src.s_addr);
-        this->dest = ntohl(hdr->ip_dst.s_addr);
+        this->ip_src = hdr->ip_src;
+        this->ip_dst = hdr->ip_dst;
         
         this->src_str = (char *)calloc(INET_ADDRSTRLEN, sizeof(char));
-        this->dest_str = (char *)calloc(INET_ADDRSTRLEN, sizeof(char));
+        this->dst_str = (char *)calloc(INET_ADDRSTRLEN, sizeof(char));
         
         inet_ntop(AF_INET, &hdr->ip_src.s_addr, this->src_str, INET_ADDRSTRLEN);
-        inet_ntop(AF_INET, &hdr->ip_dst.s_addr, this->dest_str, INET_ADDRSTRLEN);
+        inet_ntop(AF_INET, &hdr->ip_dst.s_addr, this->dst_str, INET_ADDRSTRLEN);
         
     } else {
+        struct ip6_hdr *hdr = (struct ip6_hdr*)bytes;
+        pip_debug_output_ip6(hdr, "ipv6_header");
+        
         this->version = 6;
         
         this->src_str = NULL;
-        this->dest_str = NULL;
+        this->dst_str = NULL;
     }
 }
 
@@ -40,14 +43,13 @@ pip_ip_header::pip_ip_header(const void * bytes) {
 
 pip_ip_header::~pip_ip_header() {
     
-    
     if (this->src_str != NULL) {
         free(this->src_str);
         this->src_str = NULL;
     }
     
-    if (this->dest_str != NULL) {
-        free(this->dest_str);
-        this->dest_str = NULL;
+    if (this->dst_str != NULL) {
+        free(this->dst_str);
+        this->dst_str = NULL;
     }
 }

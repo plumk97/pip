@@ -31,13 +31,13 @@ typedef void (*pip_netif_new_tcp_connect_callback) (pip_netif * netif, pip_tcp *
 /// @param buffer_len 数据长度
 /// @param src_ip 来源地址
 /// @param src_port 来源端口
-/// @param dest_ip 目的地址
-/// @param dest_port 目的端口
+/// @param dst_ip 目的地址
+/// @param dst_port 目的端口
 /// @param version IP协议版本 4 || 6
-typedef void (*pip_netif_received_udp_data_callback) (pip_netif * netif, void * buffer, pip_uint16 buffer_len, const char * src_ip, pip_uint16 src_port, const char * dest_ip, pip_uint16 dest_port, pip_uint8 version);
+typedef void (*pip_netif_received_udp_data_callback) (pip_netif * netif, void * buffer, pip_uint16 buffer_len, const char * src_ip, pip_uint16 src_port, const char * dst_ip, pip_uint16 dst_port, pip_uint8 version);
 
 // 接受到ICMP数据
-typedef void (*pip_netif_received_icmp_data_callback) (pip_netif * netif, void * buffer, pip_uint16 buffer_len, const char * src_ip, const char * dest_ip, pip_uint8 ttl);
+typedef void (*pip_netif_received_icmp_data_callback) (pip_netif * netif, void * buffer, pip_uint16 buffer_len, const char * src_ip, const char * dst_ip, pip_uint8 ttl);
 
 
 class pip_netif {
@@ -55,8 +55,8 @@ public:
     /// @param buf _
     /// @param proto _
     /// @param src _
-    /// @param dest _
-    void output(pip_buf * buf, pip_uint8 proto, pip_uint32 src, pip_uint32 dest);
+    /// @param dst _
+    void output(pip_buf * buf, pip_uint8 proto, pip_in_addr src, pip_in_addr dst);
     
     
     /// 需要至少250ms调用一次该函数

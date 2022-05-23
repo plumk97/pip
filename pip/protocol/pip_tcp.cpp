@@ -325,7 +325,7 @@ void pip_tcp::received(pip_uint16 len) {
 
 void pip_tcp::debug_status() {
     printf("source %s port %d\n", this->ip_header->src_str, this->src_port);
-    printf("destination %s port %d\n", this->ip_header->dest_str, this->dest_port);
+    printf("destination %s port %d\n", this->ip_header->dst_str, this->dst_port);
     printf("wind %hu \n", this->wind);
     printf("wait ack pkts %d \n", this->_packet_queue->size());
     
@@ -347,7 +347,7 @@ void pip_tcp::send_packet(pip_tcp_packet *packet) {
     packet->sended();
     tcphdr * hdr = packet->get_hdr();
     pip_uint16 datalen = packet->get_payload_len();
-    pip_netif::shared()->output(packet->get_head_buf(), IPPROTO_TCP, this->ip_header->dest, this->ip_header->src);
+    pip_netif::shared()->output(packet->get_head_buf(), IPPROTO_TCP, this->ip_header->ip_dst, this->ip_header->ip_src);
     
     this->_last_ack = ntohl(hdr->th_ack);
     
@@ -361,7 +361,7 @@ void pip_tcp::send_packet(pip_tcp_packet *packet) {
 void
 pip_tcp::resend_packet(pip_tcp_packet *packet) {
     packet->sended();
-    pip_netif::shared()->output(packet->get_head_buf(), IPPROTO_TCP, this->ip_header->dest, this->ip_header->src);
+    pip_netif::shared()->output(packet->get_head_buf(), IPPROTO_TCP, this->ip_header->ip_dst, this->ip_header->ip_src);
     
 #if PIP_DEBUG
     pip_debug_output_tcp(this, packet, "tcp_resend");
@@ -587,7 +587,7 @@ void pip_tcp::input(const void * bytes, pip_ip_header * ip_header) {
         return;
     }
     
-    pip_uint32 iden = ip_header->src ^ ip_header->dest ^ dport ^ sport;
+    pip_uint32 iden = ip_header->ip_src.s_addr ^ ip_header->ip_dst.s_addr ^ dport ^ sport;
     pip_tcp * tcp = fetch_tcp_connection(iden);
     
     if (tcp == NULL && hdr->th_flags & TH_SYN && tcp_connections.size() < PIP_TCP_MAX_CONNS) {
@@ -597,7 +597,7 @@ void pip_tcp::input(const void * bytes, pip_ip_header * ip_header) {
         tcp->ip_header = ip_header;
         
         tcp->src_port = sport;
-        tcp->dest_port = dport;
+        tcp->dst_port = dport;
         
         tcp_connections[iden] = tcp;
     }
@@ -619,7 +619,7 @@ void pip_tcp::input(const void * bytes, pip_ip_header * ip_header) {
             tcp->ip_header = ip_header;
             
             tcp->src_port = ntohs(hdr->th_sport);
-            tcp->dest_port = dport;
+            tcp->dst_port = dport;
             
             tcp->seq = ntohl(hdr->th_ack);
             tcp->ack = increase_seq(ntohl(hdr->th_seq), hdr->th_flags, datalen);
@@ -730,7 +730,7 @@ pip_tcp_packet(pip_tcp *tcp, pip_uint8 flags, pip_buf * option_buf, pip_buf * pa
     if (true) {
         // 源端口
         int len = sizeof(pip_uint16);
-        pip_uint16 port = htons(tcp->dest_port);
+        pip_uint16 port = htons(tcp->dst_port);
         memcpy(buffer + offset, &port, len);
         
         offset += len;
@@ -803,7 +803,7 @@ pip_tcp_packet(pip_tcp *tcp, pip_uint8 flags, pip_buf * option_buf, pip_buf * pa
     if (true) {
         // 计算校验和
         
-        pip_uint16 checksum = pip_inet_checksum_buf(head_buf, IPPROTO_TCP, tcp->ip_header->dest, tcp->ip_header->src);
+        pip_uint16 checksum = pip_inet_checksum_buf(head_buf, IPPROTO_TCP, tcp->ip_header->ip_dst.s_addr, tcp->ip_header->ip_src.s_addr);
         checksum = htons(checksum);
         memcpy(buffer + checksum_offset, &checksum, sizeof(pip_uint16));
     }

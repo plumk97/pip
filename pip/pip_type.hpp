@@ -14,12 +14,20 @@
 #include <sys/types.h>
 
 #include <netinet/ip.h>
+#include <netinet/ip6.h>
 #include <netinet/ip_icmp.h>
 #include <netinet/tcp.h>
 #include <netinet/udp.h>
 
 #include <sys/time.h>
 #include "pip_opt.hpp"
+
+
+#define PIP_UINT32_MAX 4294967295
+
+#define PIP_MAX(A, B) (A > B ? A : B)
+#define PIP_MIN(A, B) (A < B ? A : B)
+
 
 typedef u_int8_t pip_uint8;
 typedef u_int16_t pip_uint16;
@@ -28,10 +36,8 @@ typedef u_int64_t pip_uint64;
 
 typedef int32_t pip_int32;
 
-#define PIP_UINT32_MAX 4294967295
-
-#define PIP_MAX(A, B) (A > B ? A : B)
-#define PIP_MIN(A, B) (A < B ? A : B)
+typedef struct in_addr pip_in_addr;
+typedef struct in6_addr pip_in6_addr;
 
 typedef enum : pip_uint8 {
     pip_tcp_status_closed,
@@ -48,7 +54,6 @@ typedef enum : pip_uint8 {
     pip_tcp_status_released,
     
 } pip_tcp_status;
-
 
 
 static inline pip_uint64 get_current_time() {

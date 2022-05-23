@@ -82,7 +82,7 @@ public:
     pip_uint16 src_port;
     
     /// 目标端口
-    pip_uint16 dest_port;
+    pip_uint16 dst_port;
     
     /// 当前链接状态
     pip_tcp_status status;

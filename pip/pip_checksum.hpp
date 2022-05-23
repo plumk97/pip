@@ -25,9 +25,9 @@ pip_uint16 pip_ip_checksum(const void * payload, int len);
 /// @param payload payload
 /// @param proto TCP / UDP
 /// @param src src
-/// @param dest dest
+/// @param dst dst
 /// @param len len
-pip_uint16 pip_inet_checksum(const void * payload, pip_uint8 proto, pip_uint32 src, pip_uint32 dest, pip_uint16 len);
+pip_uint16 pip_inet_checksum(const void * payload, pip_uint8 proto, pip_uint32 src, pip_uint32 dst, pip_uint16 len);
 
-pip_uint16 pip_inet_checksum_buf(pip_buf * buf, pip_uint8 proto, pip_uint32 src, pip_uint32 dest);
+pip_uint16 pip_inet_checksum_buf(pip_buf * buf, pip_uint8 proto, pip_uint32 src, pip_uint32 dst);
 #endif /* pip_checksum_hpp */

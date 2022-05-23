@@ -37,6 +37,21 @@ void pip_debug_output_ip(struct ip *hdr, const char *iden) {
     
 }
 
+void pip_debug_output_ip6(struct ip6_hdr *hdr, const char *iden) {
+#if PIP_DEBUG
+    pip_debug_output_iden(iden);
+    printf("version: %u \n", hdr->ip6_ctlun.ip6_un2_vfc >> 4);
+    printf("traffic_class: %u \n", hdr->ip6_ctlun.ip6_un2_vfc & 0x0F);
+    printf("flow_label: %u \n", ntohl(hdr->ip6_ctlun.ip6_un1.ip6_un1_flow));
+    printf("payload_length: %u \n", ntohs(hdr->ip6_ctlun.ip6_un1.ip6_un1_plen));
+    printf("next_header: %u \n", hdr->ip6_ctlun.ip6_un1.ip6_un1_nxt);
+    printf("hop_limit: %u \n", hdr->ip6_ctlun.ip6_un1.ip6_un1_hlim);
+    
+    
+    
+#endif
+}
+
 /// 打印UDP
 /// @param hdr _
 /// @param iden 标识
@@ -78,7 +93,7 @@ void pip_debug_output_tcp(pip_tcp * tcp, struct tcphdr *hdr, pip_uint32 datalen,
     pip_debug_output_iden(iden);
     if (ip_header) {
         printf("src %s port %u\n", ip_header->src_str, tcp->src_port);
-        printf("dst %s port %u\n", ip_header->dest_str, tcp->dest_port);
+        printf("dst %s port %u\n", ip_header->dst_str, tcp->dst_port);
     }
     
     printf("iden: %u\n", tcp->get_iden());

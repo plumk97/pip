@@ -33,11 +33,23 @@ public:
     /// 携带数据长度
     pip_uint16 datalen;
     
-    pip_uint32 src;
-    pip_uint32 dest;
+    /// ip4 源地址
+    pip_in_addr ip_src;
+    
+    /// ip4 目的地址
+    pip_in_addr ip_dst;
     
     char * src_str;
-    char * dest_str;
+    char * dst_str;
+    
+    
+public:
+    
+    /// ip4地址转换为字符串
+    static char * ip4_to_str(pip_in_addr addr);
+    
+    /// ip6地址转换为字符串
+    static char * ip6_to_str(pip_in6_addr addr);
     
 };
 #endif /* pip_ip_header_hpp */

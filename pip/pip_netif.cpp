@@ -86,7 +86,7 @@ void pip_netif::input(const void *buffer) {
 }
 
 
-void pip_netif::output(pip_buf *buf, pip_uint8 proto, pip_uint32 src, pip_uint32 dest) {
+void pip_netif::output(pip_buf *buf, pip_uint8 proto, pip_in_addr src, pip_in_addr dst) {
     
     pip_buf * ip_head_buf = new pip_buf(sizeof(struct ip));
     ip_head_buf->set_next(buf);
@@ -101,8 +101,8 @@ void pip_netif::output(pip_buf *buf, pip_uint8 proto, pip_uint32 src, pip_uint32
     hdr->ip_ttl = 64;
     hdr->ip_p = proto;
     hdr->ip_sum = 0;
-    hdr->ip_src.s_addr = htonl(src);
-    hdr->ip_dst.s_addr = htonl(dest);
+    hdr->ip_src = src;
+    hdr->ip_dst = dst;
     hdr->ip_sum = htons(pip_ip_checksum(hdr, sizeof(struct ip)));
     
     if (this->output_ip_data_callback) {
