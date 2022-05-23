@@ -27,8 +27,9 @@ pip_uint16 pip_ip_checksum(const void * payload, int len);
 /// @param src src
 /// @param dst dst
 /// @param len len
-pip_uint16 pip_inet_checksum(const void * payload, pip_uint8 proto, pip_uint32 src, pip_uint32 dst, pip_uint16 len);
-pip_uint16 pip_inet6_checksum(const void * payload, pip_uint8 proto, pip_uint32 *src, pip_uint32 *dst, pip_uint16 len);
+pip_uint16 pip_inet_checksum(const void * payload, pip_uint8 proto, pip_in_addr src, pip_in_addr dst, pip_uint16 len);
+pip_uint16 pip_inet6_checksum(const void * payload, pip_uint8 proto, pip_in6_addr src, pip_in6_addr dst, pip_uint16 len);
 
-pip_uint16 pip_inet_checksum_buf(pip_buf * buf, pip_uint8 proto, pip_uint32 src, pip_uint32 dst);
+pip_uint16 pip_inet_checksum_buf(pip_buf * buf, pip_uint8 proto, pip_in_addr src, pip_in_addr dst);
+pip_uint16 pip_inet6_checksum_buf(pip_buf * buf, pip_uint8 proto, pip_in6_addr src, pip_in6_addr dst);
 #endif /* pip_checksum_hpp */

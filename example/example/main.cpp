@@ -93,7 +93,7 @@ uint8_t * hexstr_to_bytes(const char * hexstr, size_t *len) {
     size_t i = 0;
     size_t j = 0;
     while (i < slen) {
-        if (i + 2 >= slen) {
+        if (i + 1 >= slen) {
             break;
         }
         
@@ -113,8 +113,7 @@ uint8_t * hexstr_to_bytes(const char * hexstr, size_t *len) {
 void test_ipv4() {
     if (true) {
         /// TCP 连接测试
-        size_t len;
-        uint8_t * bytes = hexstr_to_bytes("45000040000040004006af7ac0a80a970ed7b127e935005058956fea00000000b0c2ffff523d0000020405b4010303060101080a0021a69a0000000004020000", &len);
+        uint8_t * bytes = hexstr_to_bytes("45000040000040004006af7ac0a80a970ed7b127e935005058956fea00000000b0c2ffff523d0000020405b4010303060101080a0021a69a0000000004020000", NULL);
         pip_netif::shared()->input(bytes);
     }
     
@@ -126,8 +125,8 @@ void test_ipv4() {
 }
 
 void test_ipv6() {
-    size_t len;
-    uint8_t * bytes = hexstr_to_bytes("600e0d00002c06400000000000000000000000000000000100000000000000000000000000000001cb0e1f986fc9eea900000000b002ffff0034000002043fc4010303060101080a23362ee60000000004020000", &len);
+    /// - 计算checksum 使用
+    uint8_t * bytes = hexstr_to_bytes("6000090000200640fe800000000000001cf09906557f6696fe800000000000001ca68fd2c002024de365c3c8cf526361df778640801000b31c5500000101080a6f8d10e542f278df", NULL);
     pip_netif::shared()->input(bytes);
 }
 
@@ -143,8 +142,8 @@ int main(int argc, const char * argv[]) {
     pip_netif::shared()->new_tcp_connect_callback = _pip_netif_new_tcp_connect_callback;
     pip_netif::shared()->received_udp_data_callback = _pip_netif_received_udp_data_callback;
     
-//    test_ipv4();
-    test_ipv6();
+    test_ipv4();
+//    test_ipv6();
     
     return 0;
 }

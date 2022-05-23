@@ -31,10 +31,22 @@ void pip_icmp::output(const void *buffer, pip_uint16 buffer_len, const char * sr
     
     pip_buf * payload_buf = new pip_buf((void *)buffer, buffer_len, 0);
     
-    pip_in_addr src = { inet_addr(src_ip) };
-    pip_in_addr dst = { inet_addr(dst_ip) };
+    pip_in_addr src;
+    pip_in6_addr src6;
     
-    pip_netif::shared()->output4(payload_buf, IPPROTO_ICMP, src, dst);
+    if (inet_pton(AF_INET, src_ip, &src) > 0) {
+        /// IPv4地址
+        pip_in_addr dst;
+        inet_pton(AF_INET, dst_ip, &dst);
+        pip_netif::shared()->output4(payload_buf, IPPROTO_ICMP, src, dst);
+        
+    } else if (inet_pton(AF_INET6, src_ip, &src6) > 0) {
+        /// IPv6地址
+        pip_in6_addr dst6;
+        inet_pton(AF_INET6, dst_ip, &dst6);
+        pip_netif::shared()->output6(payload_buf, IPPROTO_ICMP, src6, dst6);
+    }
+    
     delete payload_buf;
     
 }

@@ -110,7 +110,27 @@ void pip_netif::output4(pip_buf * buf, pip_uint8 proto, pip_in_addr src, pip_in_
 }
 
 void pip_netif::output6(pip_buf * buf, pip_uint8 proto, pip_in6_addr src, pip_in6_addr dst) {
+ 
+    pip_buf * ip_head_buf = new pip_buf(sizeof(struct ip6_hdr));
+    ip_head_buf->set_next(buf);
     
+    struct ip6_hdr *hdr = (struct ip6_hdr *)ip_head_buf->payload;
+    hdr->ip6_ctlun.ip6_un2_vfc = 6 << 4 | 0;
+    
+    hdr->ip6_ctlun.ip6_un1.ip6_un1_flow = (pip_uint32)proto; /// 不知道该怎么设置
+    hdr->ip6_ctlun.ip6_un1.ip6_un1_plen = htons(buf->total_len);
+    hdr->ip6_ctlun.ip6_un1.ip6_un1_nxt = proto;
+    hdr->ip6_ctlun.ip6_un1.ip6_un1_hlim = 64;
+    
+    hdr->ip6_src = src;
+    hdr->ip6_dst = dst;
+    
+    if (this->output_ip_data_callback) {
+        this->output_ip_data_callback(this, ip_head_buf);
+    }
+    
+    ip_head_buf->set_next(NULL);
+    delete ip_head_buf;
 }
 
 void pip_netif::timer_tick() {

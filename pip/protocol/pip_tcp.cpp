@@ -587,16 +587,6 @@ void pip_tcp::handle_receive(void *data, pip_uint16 datalen) {
 void pip_tcp::input(const void * bytes, pip_ip_header * ip_header) {
     struct tcphdr *hdr = (struct tcphdr *)bytes;
     
-    printf("%04x\n", ntohs(hdr->th_sum));
-    hdr->th_sum = 0;
-    
-    
-//    pip_uint32 sum = pip_inet_checksum(bytes, IPPROTO_TCP, ntohl(ip_header->ip_src.s_addr), ntohl(ip_header->ip_dst.s_addr), hdr->th_off * 4);
-    pip_uint32 sum = pip_inet6_checksum(bytes, IPPROTO_TCP, (pip_uint32 *)&ip_header->ip6_src, (pip_uint32 *)&ip_header->ip6_dst, hdr->th_off * 4);
-    printf("\n");
-    printf("%x\n", sum);
-    printf("%x\n", htons(sum));
-    
     pip_uint16 datalen = ip_header->datalen - hdr->th_off * 4;
     pip_uint16 dport = ntohs(hdr->th_dport);
     pip_uint16 sport = ntohs(hdr->th_sport);
@@ -820,8 +810,12 @@ pip_tcp_packet(pip_tcp *tcp, pip_uint8 flags, pip_buf * option_buf, pip_buf * pa
     
     if (true) {
         // 计算校验和
-        
-        pip_uint16 checksum = pip_inet_checksum_buf(head_buf, IPPROTO_TCP, tcp->ip_header->ip_dst.s_addr, tcp->ip_header->ip_src.s_addr);
+        pip_uint16 checksum = 0;
+        if (tcp->ip_header->version == 4) {
+            checksum = pip_inet_checksum_buf(head_buf, IPPROTO_TCP, tcp->ip_header->ip_dst, tcp->ip_header->ip_src);
+        } else {
+            checksum = pip_inet6_checksum_buf(head_buf, IPPROTO_TCP, tcp->ip_header->ip6_dst, tcp->ip_header->ip6_src);
+        }
         checksum = htons(checksum);
         memcpy(buffer + checksum_offset, &checksum, sizeof(pip_uint16));
     }

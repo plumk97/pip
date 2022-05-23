@@ -39,20 +39,37 @@ void pip_udp::output(const void *buffer, pip_uint16 buffer_len, const char * src
     
     pip_uint16 total_len = sizeof(struct udphdr) + buffer_len;
     
-    pip_in_addr src = { inet_addr(src_ip)};
-    pip_in_addr dst = { inet_addr(dst_ip) };
-
     struct udphdr *hdr = (struct udphdr*)udp_head_buf->payload;
     hdr->uh_dport = htons(dst_port);
     hdr->uh_sport = htons(src_port);
     hdr->uh_ulen = htons(total_len);
     hdr->uh_sum = 0;
     
-    hdr->uh_sum = pip_inet_checksum_buf(udp_head_buf, IPPROTO_UDP, src.s_addr, dst.s_addr);
-    hdr->uh_sum = htons(hdr->uh_sum);
-
-    pip_netif::shared()->output4(udp_head_buf, IPPROTO_UDP, src, dst);
+    pip_in_addr src;
+    pip_in6_addr src6;
     
+    if (inet_pton(AF_INET, src_ip, &src) > 0) {
+        /// IPv4地址
+        pip_in_addr dst;
+        inet_pton(AF_INET, dst_ip, &dst);
+        
+        hdr->uh_sum = pip_inet_checksum_buf(udp_head_buf, IPPROTO_UDP, src, dst);
+        hdr->uh_sum = htons(hdr->uh_sum);
+        
+        pip_netif::shared()->output4(udp_head_buf, IPPROTO_UDP, src, dst);
+        
+    } else if (inet_pton(AF_INET6, src_ip, &src6) > 0) {
+        /// IPv6地址
+        pip_in6_addr dst6;
+        inet_pton(AF_INET6, dst_ip, &dst6);
+        
+        hdr->uh_sum = pip_inet6_checksum_buf(udp_head_buf, IPPROTO_UDP, src6, dst6);
+        hdr->uh_sum = htons(hdr->uh_sum);
+        
+        pip_netif::shared()->output6(udp_head_buf, IPPROTO_UDP, src6, dst6);
+    }
+    
+
     delete udp_head_buf;
     
 }
