@@ -34,7 +34,7 @@ void pip_icmp::output(const void *buffer, pip_uint16 buffer_len, const char * sr
     pip_in_addr src = { inet_addr(src_ip) };
     pip_in_addr dst = { inet_addr(dst_ip) };
     
-    pip_netif::shared()->output(payload_buf, IPPROTO_ICMP, src, dst);
+    pip_netif::shared()->output4(payload_buf, IPPROTO_ICMP, src, dst);
     delete payload_buf;
     
 }

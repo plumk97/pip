@@ -42,6 +42,44 @@ void _pip_netif_received_udp_data_callback(pip_netif * netif, void * buffer, pip
     pip_udp::output(buffer, buffer_len, src_ip, src_port, dst_ip, dst_port);
 }
 
+uint8_t char_to_uint8(char ch)
+{
+    int num = 0;
+    if (ch >= '0' && ch <= '9') {
+        num = ch - 0x30;
+    }
+    else {
+        switch (ch) {
+        case 'A':
+        case 'a':
+            num = 10;
+            break;
+        case 'B':
+        case 'b':
+            num = 11;
+            break;
+        case 'C':
+        case 'c':
+            num = 12;
+            break;
+        case 'D':
+        case 'd':
+            num = 13;
+            break;
+        case 'E':
+        case 'e':
+            num = 14;
+            break;
+        case 'F':
+        case 'f':
+            num = 15;
+            break;
+        default:
+            num = 0;
+        }
+    }
+    return num;
+}
 
 uint8_t * hexstr_to_bytes(const char * hexstr, size_t *len) {
     
@@ -52,12 +90,22 @@ uint8_t * hexstr_to_bytes(const char * hexstr, size_t *len) {
         *len = (slen+1)/2;
     }
     
-    char byte[2];
-    for (size_t i = 0, j = 0; i < slen; i += 2, j++) {
-        memcpy(byte, hexstr+i, 2);
-        sscanf(byte, "%x", (unsigned int *)(bytes + j));
+    size_t i = 0;
+    size_t j = 0;
+    while (i < slen) {
+        if (i + 2 >= slen) {
+            break;
+        }
+        
+        uint16_t byte = char_to_uint8(hexstr[i]) << 4 | char_to_uint8(hexstr[i + 1]);
+        bytes[j] = byte;
+        i += 2;
+        j += 1;
     }
-
+    
+    if (i < slen) {
+        bytes[j] = char_to_uint8(hexstr[i]) << 4;
+    }
     return bytes;
 }
 
@@ -65,9 +113,9 @@ uint8_t * hexstr_to_bytes(const char * hexstr, size_t *len) {
 void test_ipv4() {
     if (true) {
         /// TCP 连接测试
-        const uint8_t bufer[] = {0x45, 0x00, 0x00, 0x40, 0x00, 0x00, 0x40, 0x00, 0x40, 0x06, 0x00, 0x00, 0x7F, 0x00, 0x00, 0x01, 0x7F, 0x00, 0x00, 0x01, 0xCA, 0x4F, 0x22, 0xB1, 0xC1, 0x27, 0x45, 0x91, 0x00, 0x00, 0x00, 0x00, 0xB0, 0x02, 0xFF, 0xFF, 0xFE, 0x34, 0x00, 0x00, 0x02, 0x04, 0x3F, 0xD8, 0x01, 0x03, 0x03, 0x06, 0x01, 0x01, 0x08, 0x0A, 0xC7, 0x00, 0xF6, 0x58, 0x00, 0x00, 0x00, 0x00, 0x04, 0x02, 0x00, 0x00};
-
-        pip_netif::shared()->input(bufer);
+        size_t len;
+        uint8_t * bytes = hexstr_to_bytes("45000040000040004006af7ac0a80a970ed7b127e935005058956fea00000000b0c2ffff523d0000020405b4010303060101080a0021a69a0000000004020000", &len);
+        pip_netif::shared()->input(bytes);
     }
     
     if (true) {
@@ -79,9 +127,8 @@ void test_ipv4() {
 
 void test_ipv6() {
     size_t len;
-    uint8_t * bytes = hexstr_to_bytes("60060300002c06400000000000000000000000000000000100000000000000000000000000000001", &len);
-    pip_ip_header *header = new pip_ip_header(bytes);
-    delete header;
+    uint8_t * bytes = hexstr_to_bytes("600e0d00002c06400000000000000000000000000000000100000000000000000000000000000001cb0e1f986fc9eea900000000b002ffff0034000002043fc4010303060101080a23362ee60000000004020000", &len);
+    pip_netif::shared()->input(bytes);
 }
 
 
@@ -96,8 +143,8 @@ int main(int argc, const char * argv[]) {
     pip_netif::shared()->new_tcp_connect_callback = _pip_netif_new_tcp_connect_callback;
     pip_netif::shared()->received_udp_data_callback = _pip_netif_received_udp_data_callback;
     
-    test_ipv4();
-//    test_ipv6();
+//    test_ipv4();
+    test_ipv6();
     
     return 0;
 }

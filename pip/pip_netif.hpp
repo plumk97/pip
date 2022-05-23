@@ -9,6 +9,7 @@
 
 #include "pip_type.hpp"
 #include "pip_buf.hpp"
+#include "pip_ip_header.hpp"
 
 class pip_netif;
 class pip_tcp;
@@ -56,8 +57,8 @@ public:
     /// @param proto _
     /// @param src _
     /// @param dst _
-    void output(pip_buf * buf, pip_uint8 proto, pip_in_addr src, pip_in_addr dst);
-    
+    void output4(pip_buf * buf, pip_uint8 proto, pip_in_addr src, pip_in_addr dst);
+    void output6(pip_buf * buf, pip_uint8 proto, pip_in6_addr src, pip_in6_addr dst);
     
     /// 需要至少250ms调用一次该函数
     void timer_tick();

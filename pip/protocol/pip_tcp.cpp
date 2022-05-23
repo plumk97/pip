@@ -347,7 +347,12 @@ void pip_tcp::send_packet(pip_tcp_packet *packet) {
     packet->sended();
     tcphdr * hdr = packet->get_hdr();
     pip_uint16 datalen = packet->get_payload_len();
-    pip_netif::shared()->output(packet->get_head_buf(), IPPROTO_TCP, this->ip_header->ip_dst, this->ip_header->ip_src);
+    
+    if (this->ip_header->version == 4) {
+        pip_netif::shared()->output4(packet->get_head_buf(), IPPROTO_TCP, this->ip_header->ip_dst, this->ip_header->ip_src);
+    } else {
+        pip_netif::shared()->output6(packet->get_head_buf(), IPPROTO_TCP, this->ip_header->ip6_dst, this->ip_header->ip6_src);
+    }
     
     this->_last_ack = ntohl(hdr->th_ack);
     
@@ -361,7 +366,11 @@ void pip_tcp::send_packet(pip_tcp_packet *packet) {
 void
 pip_tcp::resend_packet(pip_tcp_packet *packet) {
     packet->sended();
-    pip_netif::shared()->output(packet->get_head_buf(), IPPROTO_TCP, this->ip_header->ip_dst, this->ip_header->ip_src);
+    if (this->ip_header->version == 4) {
+        pip_netif::shared()->output4(packet->get_head_buf(), IPPROTO_TCP, this->ip_header->ip_dst, this->ip_header->ip_src);
+    } else {
+        pip_netif::shared()->output6(packet->get_head_buf(), IPPROTO_TCP, this->ip_header->ip6_dst, this->ip_header->ip6_src);
+    }
     
 #if PIP_DEBUG
     pip_debug_output_tcp(this, packet, "tcp_resend");
@@ -578,7 +587,17 @@ void pip_tcp::handle_receive(void *data, pip_uint16 datalen) {
 void pip_tcp::input(const void * bytes, pip_ip_header * ip_header) {
     struct tcphdr *hdr = (struct tcphdr *)bytes;
     
-    pip_uint16 datalen = ip_header->datalen - hdr->th_off * 4 - ip_header->headerlen;
+    printf("%04x\n", ntohs(hdr->th_sum));
+    hdr->th_sum = 0;
+    
+    
+//    pip_uint32 sum = pip_inet_checksum(bytes, IPPROTO_TCP, ntohl(ip_header->ip_src.s_addr), ntohl(ip_header->ip_dst.s_addr), hdr->th_off * 4);
+    pip_uint32 sum = pip_inet6_checksum(bytes, IPPROTO_TCP, (pip_uint32 *)&ip_header->ip6_src, (pip_uint32 *)&ip_header->ip6_dst, hdr->th_off * 4);
+    printf("\n");
+    printf("%x\n", sum);
+    printf("%x\n", htons(sum));
+    
+    pip_uint16 datalen = ip_header->datalen - hdr->th_off * 4;
     pip_uint16 dport = ntohs(hdr->th_dport);
     pip_uint16 sport = ntohs(hdr->th_sport);
     
@@ -586,8 +605,7 @@ void pip_tcp::input(const void * bytes, pip_ip_header * ip_header) {
         delete ip_header;
         return;
     }
-    
-    pip_uint32 iden = ip_header->ip_src.s_addr ^ ip_header->ip_dst.s_addr ^ dport ^ sport;
+    pip_uint32 iden = ip_header->generate_iden() ^ dport ^ sport;
     pip_tcp * tcp = fetch_tcp_connection(iden);
     
     if (tcp == NULL && hdr->th_flags & TH_SYN && tcp_connections.size() < PIP_TCP_MAX_CONNS) {

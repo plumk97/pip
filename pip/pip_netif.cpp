@@ -44,18 +44,10 @@ pip_netif * pip_netif::shared() {
 }
 
 void pip_netif::input(const void *buffer) {
-#if PIP_DEBUG
-    pip_debug_output_ip((struct ip*)buffer, "ip_input");
-#endif
     
     pip_ip_header * ip_header = new pip_ip_header(buffer);
+    pip_debug_output_ipheader(ip_header, "ip_input");
     
-    
-    if (ip_header->version == 6) {
-        /// 暂不支持IPv6
-        delete ip_header;
-        return;
-    }
     
     if (ip_header->version == 4) {
         /// - 检测是否有options 不支持options
@@ -86,7 +78,7 @@ void pip_netif::input(const void *buffer) {
 }
 
 
-void pip_netif::output(pip_buf *buf, pip_uint8 proto, pip_in_addr src, pip_in_addr dst) {
+void pip_netif::output4(pip_buf * buf, pip_uint8 proto, pip_in_addr src, pip_in_addr dst) {
     
     pip_buf * ip_head_buf = new pip_buf(sizeof(struct ip));
     ip_head_buf->set_next(buf);
@@ -117,6 +109,9 @@ void pip_netif::output(pip_buf *buf, pip_uint8 proto, pip_in_addr src, pip_in_ad
     delete ip_head_buf;
 }
 
+void pip_netif::output6(pip_buf * buf, pip_uint8 proto, pip_in6_addr src, pip_in6_addr dst) {
+    
+}
 
 void pip_netif::timer_tick() {
     if (this->_isn >= PIP_UINT32_MAX) {

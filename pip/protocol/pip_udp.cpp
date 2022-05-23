@@ -51,7 +51,7 @@ void pip_udp::output(const void *buffer, pip_uint16 buffer_len, const char * src
     hdr->uh_sum = pip_inet_checksum_buf(udp_head_buf, IPPROTO_UDP, src.s_addr, dst.s_addr);
     hdr->uh_sum = htons(hdr->uh_sum);
 
-    pip_netif::shared()->output(udp_head_buf, IPPROTO_UDP, src, dst);
+    pip_netif::shared()->output4(udp_head_buf, IPPROTO_UDP, src, dst);
     
     delete udp_head_buf;
     

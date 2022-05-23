@@ -39,17 +39,19 @@ public:
     /// ip4 目的地址
     pip_in_addr ip_dst;
     
+    /// ip6 源地址
+    pip_in6_addr ip6_src;
+    
+    /// ip6 目的地址
+    pip_in6_addr ip6_dst;
+    
+    /// 源地址 字符串
     char * src_str;
+    
+    /// 目的地址 字符串
     char * dst_str;
     
-    
-public:
-    
-    /// ip4地址转换为字符串
-    static char * ip4_to_str(pip_in_addr addr);
-    
-    /// ip6地址转换为字符串
-    static char * ip6_to_str(pip_in6_addr addr);
-    
+    /// 生成32位标识
+    pip_uint32 generate_iden();
 };
 #endif /* pip_ip_header_hpp */

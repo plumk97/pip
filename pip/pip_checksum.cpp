@@ -59,6 +59,31 @@ pip_uint16 pip_inet_checksum(const void * payload, pip_uint8 proto, pip_uint32 s
     return ~((pip_uint16)sum);
 }
 
+pip_uint16 pip_inet6_checksum(const void * payload, pip_uint8 proto, pip_uint32 *src, pip_uint32 *dst, pip_uint16 len) {
+    
+    pip_uint32 sum = 0;
+    for (int i = 0; i < 4; i ++) {
+        
+        sum += (src[i] & 0xFFFF0000) >> 16;
+        sum += (src[i] & 0x00000FFFF) >> 0;
+        pip_fold_uint32(sum);
+        
+        sum += (dst[i] & 0xFFFF0000) >> 16;
+        sum += (dst[i] & 0x00000FFFF) >> 0;
+        pip_fold_uint32(sum);
+        
+    }
+    
+    sum += proto;
+    pip_fold_uint32(sum);
+    
+    sum += (pip_uint16)len;
+    pip_fold_uint32(sum);
+    
+    sum = pip_standard_checksum(payload, len, sum);
+    return ~((pip_uint16)sum);
+}
+
 
 pip_uint16 pip_inet_checksum_buf(pip_buf * buf, pip_uint8 proto, pip_uint32 src, pip_uint32 dst) {
     pip_uint32 sum = 0;

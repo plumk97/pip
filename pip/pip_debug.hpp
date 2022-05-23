@@ -14,7 +14,7 @@
 /// @param hdr _
 /// @param iden 标识
 void pip_debug_output_ip(struct ip *hdr, const char *iden);
-void pip_debug_output_ip6(struct ip6_hdr *hdr, const char *iden);
+void pip_debug_output_ipheader(pip_ip_header *header, const char *iden);
 
 /// 打印UDP
 /// @param hdr _
