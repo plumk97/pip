@@ -75,7 +75,7 @@ pip_uint32 pip_ip_header::generate_iden() {
     }
     
     pip_uint32 *s_addrs = (pip_uint32 *)&this->ip6_src;
-    pip_uint32 *d_addrs = (pip_uint32 *)&this->ip6_src;
+    pip_uint32 *d_addrs = (pip_uint32 *)&this->ip6_dst;
     
     return (s_addrs[0] ^ s_addrs[1] ^ s_addrs[2] ^ s_addrs[3] ^
             d_addrs[0] ^ d_addrs[1] ^ d_addrs[2] ^ d_addrs[3] ^ 6);
