@@ -665,6 +665,11 @@ void pip_tcp::input(const void * bytes, pip_ip_header * ip_header) {
     }
     
     tcp->ack = increase_seq(ntohl(hdr->th_seq), hdr->th_flags, datalen);
+    
+    bool is_update_wind = false;
+    if (tcp->opp_wind <= 0 && tcp->_is_wait_push_ack == false) {
+        is_update_wind = true;
+    }
     tcp->opp_wind = ntohs(hdr->th_win);
     
     
@@ -676,6 +681,11 @@ void pip_tcp::input(const void * bytes, pip_ip_header * ip_header) {
     
     if (hdr->th_flags & TH_ACK) {
         tcp->handle_ack(ntohl(hdr->th_ack));
+        
+        /// 更新之前对方wind为0，并且当前无需要确认的push包 调用写入完成回调让上层继续写入
+        if (is_update_wind && tcp->written_callback) {
+            tcp->written_callback(tcp, 0);
+        }
     }
     
     if (fetch_tcp_connection(iden) == NULL) {
