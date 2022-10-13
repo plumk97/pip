@@ -473,43 +473,44 @@ void pip_tcp::handle_syn(void * options, pip_uint16 optionlen) {
     if (optionlen > 0) {
         pip_uint8 * bytes = (pip_uint8 *)options;
         pip_uint16 offset = 0;
-        pip_uint16 pre_offset = -1;
-        /// pre_offset != offset 防止碰到无法解析的出现死循环
-        while (offset < optionlen && pre_offset != offset) {
-            
-            pre_offset = offset;
+        while (offset < optionlen) {
             pip_uint8 kind = bytes[offset];
-            
-            if (kind == 0) {
-                break;
+            offset += 1;
+#if PIP_DEBUG
+            printf("kind: %d\n", kind);
+#endif
+            if (kind == 0 || kind == 1) {
+                continue;
             }
             
+            pip_uint8 len = bytes[offset];
+            offset += 1;
+            
+            pip_uint8 value_len = 0;
+            if (len > 2) {
+                value_len = len - 2;
+            }
+            
+            
             switch (kind) {
-                case 1: {
-                    offset += 1;
-                    break;
-                }
                     
                 case 2: {
                     // mss
-                    pip_uint8 len = bytes[offset + 1];
                     pip_uint16 mss = 0;
-                    memcpy(&mss, bytes + offset + 2, len - offset - 2);
+                    memcpy(&mss, bytes + offset, value_len);
                     this->opp_mss = ntohs(mss);
 #if PIP_DEBUG
-                    printf("mss: %d", ntohs(mss));
+                    printf("mss: %d\n", ntohs(mss));
 #endif
-                    
-                    offset += len;
                     break;
                 }
                     
                 default: {
-                    pip_uint8 len = bytes[offset + 1];
-                    offset += len;
                     break;
                 }
             }
+            
+            offset += value_len;
         }
     }
     
