@@ -46,7 +46,9 @@ pip_netif * pip_netif::shared() {
 void pip_netif::input(const void *buffer) {
     
     pip_ip_header * ip_header = new pip_ip_header(buffer);
+#if PIP_DEBUG
     pip_debug_output_ipheader(ip_header, "ip_input");
+#endif
     
     
     if (ip_header->version == 4) {
