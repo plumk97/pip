@@ -117,9 +117,13 @@ void pip_netif::output6(pip_buf * buf, pip_uint8 proto, pip_in6_addr src, pip_in
     ip_head_buf->set_next(buf);
     
     struct ip6_hdr *hdr = (struct ip6_hdr *)ip_head_buf->payload;
-    hdr->ip6_ctlun.ip6_un2_vfc = 6 << 4 | 0;
     
-    hdr->ip6_ctlun.ip6_un1.ip6_un1_flow = (pip_uint32)proto; /// 不知道该怎么设置
+    // version | traffic class | flow label
+    pip_uint32 vtf = htonl(0x60000000);
+    memcpy(ip_head_buf->payload, &vtf, 4);
+    
+//    hdr->ip6_ctlun.ip6_un2_vfc = 6 << 4 | 0;
+//    hdr->ip6_ctlun.ip6_un1.ip6_un1_flow = 0; /// 不知道该怎么设置
     hdr->ip6_ctlun.ip6_un1.ip6_un1_plen = htons(buf->total_len);
     hdr->ip6_ctlun.ip6_un1.ip6_un1_nxt = proto;
     hdr->ip6_ctlun.ip6_un1.ip6_un1_hlim = 64;
