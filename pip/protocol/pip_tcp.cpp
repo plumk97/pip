@@ -53,6 +53,7 @@ pip_tcp::pip_tcp() {
     this->mss = PIP_TCP_MSS;
     
     this->opp_wind = 0;
+    this->opp_wind_shift = 0;
     this->opp_mss = 0;
     
     this->_last_ack = 0;
@@ -505,6 +506,13 @@ void pip_tcp::handle_syn(void * options, pip_uint16 optionlen) {
                     break;
                 }
                     
+                case 3: {
+                    pip_uint8 shift = 0;
+                    memcpy(&shift, bytes + offset, value_len);
+                    this->opp_wind_shift = shift;
+                    break;
+                }
+                    
                 default: {
                     break;
                 }
@@ -517,9 +525,10 @@ void pip_tcp::handle_syn(void * options, pip_uint16 optionlen) {
 #if PIP_DEBUG
     printf("\n\n");
 #endif
-    pip_buf * option_buf = new pip_buf(4);
+    pip_buf * option_buf = new pip_buf(8);
     pip_uint8 * optionBuffer = (pip_uint8 *)option_buf->payload;
     memset(optionBuffer, 0, 4);
+    pip_uint8 offset = 0;
     if (true) {
         // mss
         pip_uint8 kind = 2;
@@ -529,6 +538,21 @@ void pip_tcp::handle_syn(void * options, pip_uint16 optionlen) {
         memcpy(optionBuffer, &kind, 1);
         memcpy(optionBuffer + 1, &len, 1);
         memcpy(optionBuffer + 2, &value, 2);
+        
+        offset += len;
+    }
+    
+    if (true) {
+        // window scale
+        pip_uint8 kind = 3;
+        pip_uint8 len = 3;
+        pip_uint8 value = 0;
+
+        memcpy(optionBuffer + offset, &kind, 1);
+        memcpy(optionBuffer + offset + 1, &len, 1);
+        memcpy(optionBuffer + offset + 2, &value, 1);
+        
+        offset += len;
     }
     
     pip_tcp_packet * packet = new pip_tcp_packet(this, TH_SYN | TH_ACK, option_buf, NULL, "pip_tcp::handle_syn");
@@ -671,7 +695,7 @@ void pip_tcp::input(const void * bytes, pip_ip_header * ip_header) {
     if (tcp->opp_wind <= 0 && tcp->_is_wait_push_ack == false) {
         is_update_wind = true;
     }
-    tcp->opp_wind = ntohs(hdr->th_win);
+    tcp->opp_wind = ntohs(hdr->th_win) << tcp->opp_wind_shift;
     
     
     if (hdr->th_flags & TH_PUSH) {

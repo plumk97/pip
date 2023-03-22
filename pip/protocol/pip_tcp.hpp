@@ -103,7 +103,9 @@ public:
     pip_uint16 wind;
     
     /// 对方的窗口大小
-    pip_uint16 opp_wind;
+    pip_uint32 opp_wind;
+    /// 窗口缩放位移位数
+    pip_uint8 opp_wind_shift;
     
     /// 外部使用-用于区分
     void * arg;
