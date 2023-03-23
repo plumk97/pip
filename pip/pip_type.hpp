@@ -29,10 +29,10 @@
 #define PIP_MIN(A, B) (A < B ? A : B)
 
 
-typedef u_int8_t pip_uint8;
-typedef u_int16_t pip_uint16;
-typedef u_int32_t pip_uint32;
-typedef u_int64_t pip_uint64;
+typedef uint8_t pip_uint8;
+typedef uint16_t pip_uint16;
+typedef uint32_t pip_uint32;
+typedef uint64_t pip_uint64;
 
 typedef int32_t pip_int32;
 

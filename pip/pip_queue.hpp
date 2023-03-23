@@ -7,7 +7,7 @@
 #ifndef pip_queue_hpp
 #define pip_queue_hpp
 
-#include <stdio.h>
+#include "pip_type.hpp"
 
 template <class T>
 class pip_queue_node {
@@ -88,12 +88,12 @@ public:
         return this->size() <= 0;
     };
     
-    int size() {
+    pip_uint32 size() {
         return this->_size;
     }
     
 private:
-    int _size;
+    pip_uint32 _size;
     pip_queue_node<T> * _head;
     pip_queue_node<T> * _foot;
 };

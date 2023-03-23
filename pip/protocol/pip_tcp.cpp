@@ -16,7 +16,7 @@
 
 
 /// 判断seq <= ack
-int is_before_seq(pip_uint32 seq, pip_uint32 ack) {
+bool is_before_seq(pip_uint32 seq, pip_uint32 ack) {
     return (pip_int32)(seq - ack) <= 0;
 }
 
@@ -268,7 +268,7 @@ void pip_tcp::reset() {
     delete this;
 }
 
-pip_uint32 pip_tcp::write(const void *bytes, pip_uint32 len) {
+pip_uint32 pip_tcp::write(const void *bytes, pip_uint32 len, bool is_copy) {
     if (this->status != pip_tcp_status_established || !this->can_write()) {
         return 0;
     }
@@ -295,7 +295,7 @@ pip_uint32 pip_tcp::write(const void *bytes, pip_uint32 len) {
         /// 如果当前发送数据大于等于总数据长度 或者 对方窗口为0 则发送PUSH标签
         pip_uint8 is_push = offset + write_len >= len || write_len >= this->opp_wind;
         
-        pip_buf * payload_buf = new pip_buf((pip_uint8 *)bytes + offset, write_len, 1);
+        pip_buf * payload_buf = new pip_buf((pip_uint8 *)bytes + offset, write_len, is_copy);
         pip_tcp_packet * packet;
         if (is_push) {
             packet = new pip_tcp_packet(this, TH_PUSH | TH_ACK, NULL, payload_buf, "pip_tcp::write1");
@@ -695,7 +695,7 @@ void pip_tcp::input(const void * bytes, pip_ip_header * ip_header) {
     if (tcp->opp_wind <= 0 && tcp->_is_wait_push_ack == false) {
         is_update_wind = true;
     }
-    tcp->opp_wind = ntohs(hdr->th_win) << tcp->opp_wind_shift;
+    tcp->opp_wind = pip_uint32(ntohs(hdr->th_win)) << tcp->opp_wind_shift;
     
     
     if (hdr->th_flags & TH_PUSH) {
@@ -769,10 +769,10 @@ pip_tcp_packet(pip_tcp *tcp, pip_uint8 flags, pip_buf * option_buf, pip_buf * pa
     }
     
     // - 填充头部
-    int offset = 0;
+    pip_uint8 offset = 0;
     if (true) {
         // 源端口
-        int len = sizeof(pip_uint16);
+        pip_uint8 len = sizeof(pip_uint16);
         pip_uint16 port = htons(tcp->dst_port);
         memcpy(buffer + offset, &port, len);
         
@@ -781,7 +781,7 @@ pip_tcp_packet(pip_tcp *tcp, pip_uint8 flags, pip_buf * option_buf, pip_buf * pa
     
     if (true) {
         // 目标端口
-        int len = sizeof(pip_uint16);
+        pip_uint8 len = sizeof(pip_uint16);
         pip_uint16 port = htons(tcp->src_port);
         memcpy(buffer + offset, &port, len);
         
@@ -790,7 +790,7 @@ pip_tcp_packet(pip_tcp *tcp, pip_uint8 flags, pip_buf * option_buf, pip_buf * pa
     
     if (true) {
         // 序号
-        int len = sizeof(pip_uint32);
+        pip_uint8 len = sizeof(pip_uint32);
         pip_uint32 seq = htonl(tcp->seq);
         memcpy(buffer + offset, &seq, len);
         
@@ -799,7 +799,7 @@ pip_tcp_packet(pip_tcp *tcp, pip_uint8 flags, pip_buf * option_buf, pip_buf * pa
     
     if (true) {
         // 确认号
-        int len = sizeof(pip_uint32);
+        pip_uint8 len = sizeof(pip_uint32);
         pip_uint32 ack = htonl(tcp->ack);
         memcpy(buffer + offset, &ack, len);
         
@@ -809,7 +809,7 @@ pip_tcp_packet(pip_tcp *tcp, pip_uint8 flags, pip_buf * option_buf, pip_buf * pa
     
     if (true) {
         // 头部长度 保留 标识
-        int len = sizeof(pip_uint16);
+        pip_uint8 len = sizeof(pip_uint16);
         pip_uint16 h_flags = 0;
         
         pip_uint16 headlen = head_buf->payload_len;
@@ -828,7 +828,7 @@ pip_tcp_packet(pip_tcp *tcp, pip_uint8 flags, pip_buf * option_buf, pip_buf * pa
     
     if (true) {
         // 窗口大小
-        int len = sizeof(pip_uint16);
+        pip_uint8 len = sizeof(pip_uint16);
         pip_uint16 wind = htons(tcp->wind);
         memcpy(buffer + offset, &wind, len);
         
@@ -836,7 +836,7 @@ pip_tcp_packet(pip_tcp *tcp, pip_uint8 flags, pip_buf * option_buf, pip_buf * pa
     }
     
     // 校验和偏移
-    int checksum_offset = offset;
+    pip_uint8 checksum_offset = offset;
     offset += sizeof(pip_uint16);
     
     // 紧急指针

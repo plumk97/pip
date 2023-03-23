@@ -14,12 +14,12 @@
 /// @param payload payload
 /// @param len len
 /// @param sum 初始值
-pip_uint32 pip_standard_checksum(const void * payload, int len, pip_uint32 sum);
+pip_uint32 pip_standard_checksum(const void * payload, pip_uint32 len, pip_uint32 sum);
 
 /// 计算IP checksum
 /// @param payload payload
 /// @param len len
-pip_uint16 pip_ip_checksum(const void * payload, int len);
+pip_uint16 pip_ip_checksum(const void * payload, pip_uint32 len);
 
 /// 计算TCP/UDP checksum
 /// @param payload payload

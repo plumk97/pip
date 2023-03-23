@@ -6,9 +6,8 @@
 
 #include "pip_buf.hpp"
 #include <string.h>
-#include <stdlib.h>
 
-pip_buf::pip_buf(void * payload, int payload_len, int is_copy) {
+pip_buf::pip_buf(void * payload, pip_uint32 payload_len, pip_uint8 is_copy) {
     
     
     this->payload_len = payload_len;
@@ -27,7 +26,7 @@ pip_buf::pip_buf(void * payload, int payload_len, int is_copy) {
     this->pre = NULL;
 }
 
-pip_buf::pip_buf(int length) {
+pip_buf::pip_buf(pip_uint32 length) {
     this->is_alloc = 1;
     this->payload = calloc(length, sizeof(char));
     this->payload_len = length;

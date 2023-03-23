@@ -52,7 +52,10 @@ public:
     
     
     /// 发送数据 返回发送的长度
-    pip_uint32 write(const void *bytes, pip_uint32 len);
+    /// @param bytes 待发送数据
+    /// @param len 待发送数据长度
+    /// @param is_copy 是否复制数据
+    pip_uint32 write(const void *bytes, pip_uint32 len, bool is_copy);
     
     /// 接受数据之后调用更新窗口
     /// @param len 接受的数据大小
