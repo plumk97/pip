@@ -47,6 +47,7 @@ pip_tcp * fetch_tcp_connection(pip_uint32 iden) {
 pip_tcp::pip_tcp() {
     this->status = pip_tcp_status_closed;
     this->ack = 0;
+    this->_opp_seq = 0;
     this->seq = pip_netif::shared()->get_isn();
     
     this->wind = PIP_TCP_WIND;
@@ -56,7 +57,7 @@ pip_tcp::pip_tcp() {
     this->opp_wind_shift = 0;
     this->opp_mss = 0;
     
-    this->_last_ack = 0;
+    this->_last_reply_ack = 0;
     this->_is_wait_push_ack = false;
     
     this->connected_callback = NULL;
@@ -321,7 +322,11 @@ void pip_tcp::received(pip_uint16 len) {
     }
     
     this->wind = PIP_MIN(this->wind + len, PIP_TCP_WIND);
-    this->send_ack();
+    
+    // 判断当前是否是最后一次接受的包 如果是直接回复 否等待其它包一起回复
+    if (this->ack - len == this->_opp_seq || this->wind - len <= 0) {
+        this->send_ack();
+    }
 }
 
 void pip_tcp::debug_status() {
@@ -355,7 +360,7 @@ void pip_tcp::send_packet(pip_tcp_packet *packet) {
         pip_netif::shared()->output6(packet->get_head_buf(), IPPROTO_TCP, this->ip_header->ip6_dst, this->ip_header->ip6_src);
     }
     
-    this->_last_ack = ntohl(hdr->th_ack);
+    this->_last_reply_ack = ntohl(hdr->th_ack);
     
     this->seq = increase_seq(this->seq, hdr->th_flags, datalen);
     
@@ -689,6 +694,7 @@ void pip_tcp::input(const void * bytes, pip_ip_header * ip_header) {
         }
     }
     
+    tcp->_opp_seq = ntohl(hdr->th_seq);
     tcp->ack = increase_seq(ntohl(hdr->th_seq), hdr->th_flags, datalen);
     
     bool is_update_wind = false;

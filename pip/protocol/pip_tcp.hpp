@@ -25,7 +25,7 @@ typedef void (*pip_tcp_closed_callback) (pip_tcp * tcp, void *arg);
 typedef void (*pip_tcp_received_callback) (pip_tcp * tcp, const void * buffer, pip_uint32 buffer_len);
 
 /// 数据发送完成回调 writeen_len完成发送的字节
-typedef void (*pip_tcp_written_callback) (pip_tcp * tcp, pip_uint16 writeen_len);
+typedef void (*pip_tcp_written_callback) (pip_tcp * tcp, pip_uint32 writeen_len);
 
 class pip_tcp {
     pip_tcp();
@@ -147,8 +147,11 @@ private:
     /// 当前连接标识
     pip_uint32 _iden;
     
+    /// 对方当前的seq
+    pip_uint32 _opp_seq;
+    
     /// 最后一次回复ack
-    pip_uint32 _last_ack;
+    pip_uint32 _last_reply_ack;
     
     /// 当前是否等待确认PUSH包
     bool _is_wait_push_ack;
