@@ -47,7 +47,6 @@ pip_tcp * fetch_tcp_connection(pip_uint32 iden) {
 pip_tcp::pip_tcp() {
     this->status = pip_tcp_status_closed;
     this->ack = 0;
-    this->_opp_seq = 0;
     this->seq = pip_netif::shared()->get_isn();
     
     this->wind = PIP_TCP_WIND;
@@ -56,8 +55,8 @@ pip_tcp::pip_tcp() {
     this->opp_wind = 0;
     this->opp_wind_shift = 0;
     this->opp_mss = 0;
+    this->_opp_seq = 0;
     
-    this->_last_reply_ack = 0;
     this->_is_wait_push_ack = false;
     
     this->connected_callback = NULL;
@@ -359,8 +358,6 @@ void pip_tcp::send_packet(pip_tcp_packet *packet) {
     } else {
         pip_netif::shared()->output6(packet->get_head_buf(), IPPROTO_TCP, this->ip_header->ip6_dst, this->ip_header->ip6_src);
     }
-    
-    this->_last_reply_ack = ntohl(hdr->th_ack);
     
     this->seq = increase_seq(this->seq, hdr->th_flags, datalen);
     

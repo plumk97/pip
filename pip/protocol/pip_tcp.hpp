@@ -150,9 +150,6 @@ private:
     /// 对方当前的seq
     pip_uint32 _opp_seq;
     
-    /// 最后一次回复ack
-    pip_uint32 _last_reply_ack;
-    
     /// 当前是否等待确认PUSH包
     bool _is_wait_push_ack;
     
