@@ -528,7 +528,7 @@ void pip_tcp::handle_syn(void * options, pip_uint16 optionlen) {
     printf("\n\n");
 #endif
     pip_buf * option_buf = new pip_buf(8);
-    pip_uint8 * optionBuffer = (pip_uint8 *)option_buf->payload;
+    pip_uint8 * optionBuffer = (pip_uint8 *)option_buf->get_payload();
     memset(optionBuffer, 0, 4);
     pip_uint8 offset = 0;
     if (true) {
@@ -766,7 +766,7 @@ pip_tcp_packet(pip_tcp *tcp, pip_uint8 flags, pip_buf * option_buf, pip_buf * pa
 
 
     if (payload_buf) {
-        this->_payload_len = payload_buf->total_len;
+        this->_payload_len = payload_buf->get_total_len();
     } else {
         this->_payload_len = 0;
     }
@@ -815,9 +815,9 @@ pip_tcp_packet(pip_tcp *tcp, pip_uint8 flags, pip_buf * option_buf, pip_buf * pa
         pip_uint8 len = sizeof(pip_uint16);
         pip_uint16 h_flags = 0;
         
-        pip_uint16 headlen = head_buf->payload_len;
+        pip_uint16 headlen = head_buf->get_payload_len();
         if (option_buf != NULL) {
-            headlen += option_buf->payload_len;
+            headlen += option_buf->get_payload_len();
         }
         
         h_flags = (headlen / 4) << 12;

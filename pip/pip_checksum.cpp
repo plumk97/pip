@@ -120,12 +120,12 @@ pip_uint16 pip_inet_checksum_buf(pip_buf * buf, pip_uint8 proto, pip_in_addr src
     sum += (pip_uint16)proto;
     sum = pip_fold_uint32(sum);
 
-    sum += (pip_uint16)buf->total_len;
+    sum += (pip_uint16)buf->get_total_len();
     sum = pip_fold_uint32(sum);
     
     
-    for (pip_buf * q = buf; q != NULL; q = q->next) {
-        sum = pip_standard_checksum(q->payload, q->payload_len, sum);
+    for (pip_buf * q = buf; q != NULL; q = q->get_next()) {
+        sum = pip_standard_checksum(q->get_payload(), q->get_payload_len(), sum);
     }
 
     return ~((pip_uint16)sum);
@@ -158,7 +158,7 @@ pip_uint16 pip_inet6_checksum_buf(pip_buf * buf, pip_uint8 proto, pip_in6_addr s
     
     /// 计算32位长度
     /// 注意字节序 需要先转16 在转32
-    pip_uint32 len32 = ntohl((pip_uint32)ntohs((pip_uint16)buf->total_len));
+    pip_uint32 len32 = ntohl((pip_uint32)ntohs((pip_uint16)buf->get_total_len()));
     sum += (len32 & 0xFFFF0000) >> 16;
     sum += (len32 & 0x0000FFFF) >> 0;
     
@@ -168,8 +168,8 @@ pip_uint16 pip_inet6_checksum_buf(pip_buf * buf, pip_uint8 proto, pip_in6_addr s
     sum += (proto32 & 0xFFFF0000) >> 16;
     sum += (proto32 & 0x0000FFFF) >> 0;
     
-    for (pip_buf * q = buf; q != NULL; q = q->next) {
-        sum = pip_standard_checksum(q->payload, q->payload_len, sum);
+    for (pip_buf * q = buf; q != NULL; q = q->get_next()) {
+        sum = pip_standard_checksum(q->get_payload(), q->get_payload_len(), sum);
     }
     
     return ~((pip_uint16)sum);

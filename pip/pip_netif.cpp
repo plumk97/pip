@@ -85,11 +85,11 @@ void pip_netif::output4(pip_buf * buf, pip_uint8 proto, pip_in_addr src, pip_in_
     pip_buf * ip_head_buf = new pip_buf(sizeof(struct ip));
     ip_head_buf->set_next(buf);
     
-    struct ip *hdr = (struct ip *)ip_head_buf->payload;
+    struct ip *hdr = (struct ip *)ip_head_buf->get_payload();
     hdr->ip_v = 4;
     hdr->ip_hl = 5;
     hdr->ip_tos = 0;
-    hdr->ip_len = htons(ip_head_buf->total_len);
+    hdr->ip_len = htons(ip_head_buf->get_total_len());
     hdr->ip_id = htons(this->_identifer++);
     hdr->ip_off = htons(IP_DF);
     hdr->ip_ttl = 64;
@@ -116,15 +116,15 @@ void pip_netif::output6(pip_buf * buf, pip_uint8 proto, pip_in6_addr src, pip_in
     pip_buf * ip_head_buf = new pip_buf(sizeof(struct ip6_hdr));
     ip_head_buf->set_next(buf);
     
-    struct ip6_hdr *hdr = (struct ip6_hdr *)ip_head_buf->payload;
+    struct ip6_hdr *hdr = (struct ip6_hdr *)ip_head_buf->get_payload();
     
     // version | traffic class | flow label
     pip_uint32 vtf = htonl(0x60000000);
-    memcpy(ip_head_buf->payload, &vtf, 4);
+    memcpy(ip_head_buf->get_payload(), &vtf, 4);
     
 //    hdr->ip6_ctlun.ip6_un2_vfc = 6 << 4 | 0;
 //    hdr->ip6_ctlun.ip6_un1.ip6_un1_flow = 0; /// 不知道该怎么设置
-    hdr->ip6_ctlun.ip6_un1.ip6_un1_plen = htons(buf->total_len);
+    hdr->ip6_ctlun.ip6_un1.ip6_un1_plen = htons(buf->get_total_len());
     hdr->ip6_ctlun.ip6_un1.ip6_un1_nxt = proto;
     hdr->ip6_ctlun.ip6_un1.ip6_un1_hlim = 64;
     

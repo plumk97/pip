@@ -39,7 +39,7 @@ void pip_udp::output(const void *buffer, pip_uint16 buffer_len, const char * src
     
     pip_uint16 total_len = sizeof(struct udphdr) + buffer_len;
     
-    struct udphdr *hdr = (struct udphdr*)udp_head_buf->payload;
+    struct udphdr *hdr = (struct udphdr*)udp_head_buf->get_payload();
     hdr->uh_dport = htons(dst_port);
     hdr->uh_sport = htons(src_port);
     hdr->uh_ulen = htons(total_len);
