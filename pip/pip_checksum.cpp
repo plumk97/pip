@@ -19,15 +19,15 @@ pip_uint32 pip_standard_checksum(const void * payload, pip_uint32 len, pip_uint3
             break;
         sum += ptr[i] << 8 | ptr[i + 1];
         i += 2;
-        sum = pip_fold_uint32(sum);
-        sum = pip_fold_uint32(sum);
+        
     }
     
     if (i < len) {
         sum += ptr[i] << 8 | 0;
-        sum = pip_fold_uint32(sum);
-        sum = pip_fold_uint32(sum);
     }
+    
+    sum = pip_fold_uint32(sum);
+    sum = pip_fold_uint32(sum);
     
     return sum;
 }
