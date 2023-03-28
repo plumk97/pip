@@ -19,7 +19,7 @@
 **测试流程**
 
 1. 开启iperf3服务端
-2. 建立utun network interface
+2. 建立utun network interface, 设置MTU为9000
 3. 路由1.1.1.1到该utun interface
 4. 开启iperf3客户端并指定地址为1.1.1.1
 5. 重定向1.1.1.1到127.0.0.1以连接到iperf3服务端
