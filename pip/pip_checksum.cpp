@@ -105,8 +105,8 @@ pip_uint16 pip_inet_checksum_buf(pip_buf * buf, pip_uint8 proto, pip_in_addr src
     sum += (pip_uint16)proto;
     
     pip_uint32 len = buf->get_total_len();
-    sum += len & 0xFFFF0000 >> 16;
-    sum += len & 0x0000FFFF >> 0;
+    sum += (len & 0xFFFF0000) >> 16;
+    sum += (len & 0x0000FFFF) >> 0;
     
     
     for (pip_buf * q = buf; q != NULL; q = q->get_next()) {
@@ -141,8 +141,8 @@ pip_uint16 pip_inet6_checksum_buf(pip_buf * buf, pip_uint8 proto, pip_in6_addr s
     sum += (pip_uint16)proto;
     
     pip_uint32 len = buf->get_total_len();
-    sum += len & 0xFFFF0000 >> 16;
-    sum += len & 0x0000FFFF >> 0;
+    sum += (len & 0xFFFF0000) >> 16;
+    sum += (len & 0x0000FFFF) >> 0;
     
     for (pip_buf * q = buf; q != NULL; q = q->get_next()) {
         sum = pip_standard_checksum(q->get_payload(), q->get_payload_len(), sum);
