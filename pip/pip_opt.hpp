@@ -20,7 +20,7 @@
 #define PIP_DEBUG           0
 #endif
 
-#define PIP_TCP_MSS         1460
+#define PIP_MTU             9000
 #define PIP_TCP_WIND        65535
 #define PIP_TCP_MAX_CONNS   65535
 

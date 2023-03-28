@@ -7,7 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		98C1B7B7272A4421004B2874 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 98C1B7B6272A4421004B2874 /* main.cpp */; };
+		5122995C29CE8E1D00FFFF54 /* hex.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5122995A29CE8E1D00FFFF54 /* hex.cpp */; };
+		5122995F29CEA2F900FFFF54 /* tun.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5122995D29CEA2F900FFFF54 /* tun.cpp */; };
+		98C1B7B7272A4421004B2874 /* main.mm in Sources */ = {isa = PBXBuildFile; fileRef = 98C1B7B6272A4421004B2874 /* main.mm */; };
 		98CAC88D279157630024AD31 /* pip_checksum.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 98CAC87A279157630024AD31 /* pip_checksum.cpp */; };
 		98CAC88E279157630024AD31 /* pip_udp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 98CAC884279157630024AD31 /* pip_udp.cpp */; };
 		98CAC88F279157630024AD31 /* pip_icmp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 98CAC885279157630024AD31 /* pip_icmp.cpp */; };
@@ -31,8 +33,12 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		5122995A29CE8E1D00FFFF54 /* hex.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = hex.cpp; sourceTree = "<group>"; };
+		5122995B29CE8E1D00FFFF54 /* hex.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = hex.hpp; sourceTree = "<group>"; };
+		5122995D29CEA2F900FFFF54 /* tun.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = tun.cpp; sourceTree = "<group>"; };
+		5122995E29CEA2F900FFFF54 /* tun.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = tun.hpp; sourceTree = "<group>"; };
 		98C1B7B3272A4421004B2874 /* example */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = example; sourceTree = BUILT_PRODUCTS_DIR; };
-		98C1B7B6272A4421004B2874 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
+		98C1B7B6272A4421004B2874 /* main.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = main.mm; sourceTree = "<group>"; };
 		98CAC87A279157630024AD31 /* pip_checksum.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = pip_checksum.cpp; sourceTree = "<group>"; };
 		98CAC87B279157630024AD31 /* pip_type.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = pip_type.hpp; sourceTree = "<group>"; };
 		98CAC87C279157630024AD31 /* pip_debug.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = pip_debug.hpp; sourceTree = "<group>"; };
@@ -86,7 +92,11 @@
 		98C1B7B5272A4421004B2874 /* example */ = {
 			isa = PBXGroup;
 			children = (
-				98C1B7B6272A4421004B2874 /* main.cpp */,
+				98C1B7B6272A4421004B2874 /* main.mm */,
+				5122995A29CE8E1D00FFFF54 /* hex.cpp */,
+				5122995B29CE8E1D00FFFF54 /* hex.hpp */,
+				5122995D29CEA2F900FFFF54 /* tun.cpp */,
+				5122995E29CEA2F900FFFF54 /* tun.hpp */,
 			);
 			path = example;
 			sourceTree = "<group>";
@@ -186,13 +196,15 @@
 			buildActionMask = 2147483647;
 			files = (
 				98CAC892279157630024AD31 /* pip_netif.cpp in Sources */,
+				5122995F29CEA2F900FFFF54 /* tun.cpp in Sources */,
 				98CAC88E279157630024AD31 /* pip_udp.cpp in Sources */,
 				98CAC890279157630024AD31 /* pip_tcp.cpp in Sources */,
 				98CAC88D279157630024AD31 /* pip_checksum.cpp in Sources */,
 				98CAC891279157630024AD31 /* pip_buf.cpp in Sources */,
 				98CAC893279157630024AD31 /* pip_debug.cpp in Sources */,
 				98CAC88F279157630024AD31 /* pip_icmp.cpp in Sources */,
-				98C1B7B7272A4421004B2874 /* main.cpp in Sources */,
+				5122995C29CE8E1D00FFFF54 /* hex.cpp in Sources */,
+				98C1B7B7272A4421004B2874 /* main.mm in Sources */,
 				98F843D72795116400452040 /* pip_ip_header.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -314,7 +326,9 @@
 		98C1B7BB272A4421004B2874 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_ENABLE_OBJC_ARC = YES;
 				CODE_SIGN_STYLE = Automatic;
+				ENABLE_HARDENED_RUNTIME = NO;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
@@ -322,7 +336,9 @@
 		98C1B7BC272A4421004B2874 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_ENABLE_OBJC_ARC = YES;
 				CODE_SIGN_STYLE = Automatic;
+				ENABLE_HARDENED_RUNTIME = NO;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;

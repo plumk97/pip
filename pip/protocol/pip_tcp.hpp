@@ -25,7 +25,10 @@ typedef void (*pip_tcp_closed_callback) (pip_tcp * tcp, void *arg);
 typedef void (*pip_tcp_received_callback) (pip_tcp * tcp, const void * buffer, pip_uint32 buffer_len);
 
 /// 数据发送完成回调 writeen_len完成发送的字节
-typedef void (*pip_tcp_written_callback) (pip_tcp * tcp, pip_uint32 writeen_len);
+/// @param writeen_len 已经发送的字节长度 如果为0 则代表之前对方的wind为0 当前已经更新 可以继续写入
+/// @param has_push 是否包含push包
+/// @param is_drop 该包是否已经丢弃
+typedef void (*pip_tcp_written_callback) (pip_tcp * tcp, pip_uint32 writeen_len, bool has_push, bool is_drop);
 
 class pip_tcp {
     pip_tcp();

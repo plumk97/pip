@@ -50,7 +50,7 @@ pip_tcp::pip_tcp() {
     this->seq = pip_netif::shared()->get_isn();
     
     this->wind = PIP_TCP_WIND;
-    this->mss = PIP_TCP_MSS;
+    this->mss = PIP_MTU - 40;
     
     this->opp_wind = 0;
     this->opp_wind_shift = 0;
@@ -166,12 +166,13 @@ void pip_tcp::timer_tick() {
                         /// 已经发送过2次的直接丢弃
                         tcp->_packet_queue->pop();
 
-                        if (packet->get_hdr()->th_flags & TH_PUSH) {
+                        bool has_push = packet->get_hdr()->th_flags & TH_PUSH;
+                        if (has_push) {
                             tcp->_is_wait_push_ack = false;
                         }
 
                         if (tcp->written_callback) {
-                            tcp->written_callback(tcp, packet->get_payload_len());
+                            tcp->written_callback(tcp, packet->get_payload_len(), false, has_push);
                         }
 
                         delete packet;
@@ -396,6 +397,7 @@ void pip_tcp::handle_ack(pip_uint32 ack) {
     
     bool has_syn = false;
     bool has_fin = false;
+    bool has_push = false;
     pip_uint32 written_length = 0;
     
     while (this->_packet_queue->size() > 0) {
@@ -419,11 +421,12 @@ void pip_tcp::handle_ack(pip_uint32 ack) {
         }
         
         if (pkt->get_payload_len() > 0) {
+            written_length += pkt->get_payload_len();
+            
             if (hdr->th_flags & TH_PUSH) {
+                has_push = true;
                 this->_is_wait_push_ack = false;
             }
-            
-            written_length += pkt->get_payload_len();
         }
         
         if (hdr->th_flags & TH_FIN) {
@@ -446,7 +449,7 @@ void pip_tcp::handle_ack(pip_uint32 ack) {
     
     if (written_length > 0) {
         if (this->written_callback) {
-            this->written_callback(this, written_length);
+            this->written_callback(this, written_length, has_push, false);
         }
     }
     
@@ -712,7 +715,7 @@ void pip_tcp::input(const void * bytes, pip_ip_header * ip_header) {
         
         /// 更新之前对方wind为0，并且当前无需要确认的push包 调用写入完成回调让上层继续写入
         if (is_update_wind && tcp->written_callback) {
-            tcp->written_callback(tcp, 0);
+            tcp->written_callback(tcp, 0, false, false);
         }
     }
     
