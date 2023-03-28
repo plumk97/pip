@@ -53,10 +53,7 @@ pip_uint16 pip_inet_checksum(const void * payload, pip_uint8 proto, pip_in_addr 
     sum += (addr & 0x0000FFFF) >> 0;
     
     sum += (pip_uint16)proto;
-    sum = pip_fold_uint32(sum);
-
     sum += (pip_uint16)len;
-    sum = pip_fold_uint32(sum);
 
     sum = pip_standard_checksum(payload, len, sum);
     
@@ -71,7 +68,7 @@ pip_uint16 pip_inet6_checksum(const void * payload, pip_uint8 proto, pip_in6_add
     pip_uint32 sum = 0;
     pip_uint32 addr = 0;
     
-    /// 计算源地址 与 目的地址 checksum
+    /// 加上 源地址 与 目的地址
     /// 注意字节序
     for (pip_uint8 i = 0; i < 4; i ++) {
 
@@ -83,21 +80,9 @@ pip_uint16 pip_inet6_checksum(const void * payload, pip_uint8 proto, pip_in6_add
         sum += (addr & 0xFFFF0000) >> 16;
         sum += (addr & 0x0000FFFF) >> 0;
     }
-    
-    sum = pip_fold_uint32(sum);
-    sum = pip_fold_uint32(sum);
-    
-    /// 计算32位长度
-    /// 注意字节序 需要先转16 在转32
-    pip_uint32 len32 = ntohl((pip_uint32)ntohs(len));
-    sum += (len32 & 0xFFFF0000) >> 16;
-    sum += (len32 & 0x0000FFFF) >> 0;
-    
-    /// 计算32位协议
-    /// 注意字节序 需要先转16 在转32
-    pip_uint32 proto32 = ntohl((pip_uint32)ntohs(proto));
-    sum += (proto32 & 0xFFFF0000) >> 16;
-    sum += (proto32 & 0x0000FFFF) >> 0;
+        
+    sum += (pip_uint16)proto;
+    sum += (pip_uint16)len;
     
     sum = pip_standard_checksum(payload, len, sum);
     return ~((pip_uint16)sum);
@@ -118,10 +103,10 @@ pip_uint16 pip_inet_checksum_buf(pip_buf * buf, pip_uint8 proto, pip_in_addr src
     sum += (addr & 0x0000FFFF) >> 0;
     
     sum += (pip_uint16)proto;
-    sum = pip_fold_uint32(sum);
-
-    sum += (pip_uint16)buf->get_total_len();
-    sum = pip_fold_uint32(sum);
+    
+    pip_uint32 len = buf->get_total_len();
+    sum += len & 0xFFFF0000 >> 16;
+    sum += len & 0x0000FFFF >> 0;
     
     
     for (pip_buf * q = buf; q != NULL; q = q->get_next()) {
@@ -140,7 +125,7 @@ pip_uint16 pip_inet6_checksum_buf(pip_buf * buf, pip_uint8 proto, pip_in6_addr s
     pip_uint32 sum = 0;
     pip_uint32 addr = 0;
     
-    /// 计算源地址 与 目的地址 checksum
+    /// 加上 源地址 与 目的地址
     /// 注意字节序
     for (pip_uint8 i = 0; i < 4; i ++) {
 
@@ -153,20 +138,11 @@ pip_uint16 pip_inet6_checksum_buf(pip_buf * buf, pip_uint8 proto, pip_in6_addr s
         sum += (addr & 0x0000FFFF) >> 0;
     }
     
-    sum = pip_fold_uint32(sum);
-    sum = pip_fold_uint32(sum);
+    sum += (pip_uint16)proto;
     
-    /// 计算32位长度
-    /// 注意字节序 需要先转16 在转32
-    pip_uint32 len32 = ntohl((pip_uint32)ntohs((pip_uint16)buf->get_total_len()));
-    sum += (len32 & 0xFFFF0000) >> 16;
-    sum += (len32 & 0x0000FFFF) >> 0;
-    
-    /// 计算32位协议
-    /// 注意字节序 需要先转16 在转32
-    pip_uint32 proto32 = ntohl((pip_uint32)ntohs(proto));
-    sum += (proto32 & 0xFFFF0000) >> 16;
-    sum += (proto32 & 0x0000FFFF) >> 0;
+    pip_uint32 len = buf->get_total_len();
+    sum += len & 0xFFFF0000 >> 16;
+    sum += len & 0x0000FFFF >> 0;
     
     for (pip_buf * q = buf; q != NULL; q = q->get_next()) {
         sum = pip_standard_checksum(q->get_payload(), q->get_payload_len(), sum);
