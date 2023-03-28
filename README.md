@@ -41,8 +41,8 @@
 ```
 ~ iperf3 -c 1.1.1.1 -R
 [ ID] Interval           Transfer     Bitrate
-[  5]   0.00-10.01  sec  2.20 GBytes  1.88 Gbits/sec                  sender
-[  5]   0.00-10.00  sec  2.16 GBytes  1.86 Gbits/sec                  receiver
+[  5]   0.00-10.01  sec  5.27 GBytes  4.52 Gbits/sec                  sender
+[  5]   0.00-10.00  sec  5.25 GBytes  4.51 Gbits/sec                  receiver
 ```
 
 ## Example
