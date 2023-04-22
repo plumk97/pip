@@ -141,9 +141,11 @@ void pip_tcp::timer_tick() {
         return;
     }
     
-    for (auto iter = tcp_connections.begin(); iter != tcp_connections.end(); iter ++) {
+    for (auto iter = tcp_connections.begin(); iter != tcp_connections.end();) {
 
         pip_tcp * tcp = iter->second;
+        iter ++;
+        
         if ((tcp->status == pip_tcp_status_fin_wait_1 || tcp->status == pip_tcp_status_fin_wait_2) &&
             cur_time - tcp->_fin_time >= 20000) {
             /// 处于等待关闭状态 并且等待时间已经大于20秒 直接关闭
