@@ -90,7 +90,7 @@ void pip_debug_output_tcp(pip_tcp * tcp, pip_tcp_packet * packet, const char *id
 void pip_debug_output_tcp(pip_tcp * tcp, struct tcphdr *hdr, pip_uint32 datalen, const char *iden) {
     
 #if PIP_DEBUG
-    if (tcp == NULL) {
+    if (tcp == nullptr) {
         return;
     }
     
@@ -157,7 +157,7 @@ void pip_debug_output_tcp(pip_tcp * tcp, struct tcphdr *hdr, pip_uint32 datalen,
 void pip_debug_output_icmp(struct icmp *hdr, const char *iden) {
     
 #if PIP_DEBUG
-    if (hdr == NULL) {
+    if (hdr == nullptr) {
         return;
     }
     

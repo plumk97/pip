@@ -55,14 +55,14 @@ pip_ip_header::pip_ip_header(const void * bytes) {
 
 pip_ip_header::~pip_ip_header() {
     
-    if (this->src_str != NULL) {
+    if (this->src_str != nullptr) {
         free(this->src_str);
-        this->src_str = NULL;
+        this->src_str = nullptr;
     }
     
-    if (this->dst_str != NULL) {
+    if (this->dst_str != nullptr) {
         free(this->dst_str);
-        this->dst_str = NULL;
+        this->dst_str = nullptr;
     }
 }
 

@@ -19,7 +19,6 @@
 #include <netinet/tcp.h>
 #include <netinet/udp.h>
 
-#include <sys/time.h>
 #include "pip_opt.hpp"
 
 
@@ -57,9 +56,10 @@ typedef enum : pip_uint8 {
 
 
 static inline pip_uint64 get_current_time() {
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-    return tv.tv_sec * 1000 + tv.tv_usec / 1000;
+    auto now = std::chrono::steady_clock::now();
+    auto now_millisec = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
+    
+    return pip_uint64(now_millisec);
 }
 
 

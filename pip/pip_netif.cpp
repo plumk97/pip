@@ -18,23 +18,23 @@
 using namespace std;
 
 mutex _lock;
-static pip_netif * netif = NULL;
+static pip_netif * netif = nullptr;
 
 pip_netif::pip_netif() {
     this->_identifer = 0;
     this->_isn = 1;
     
-    this->output_ip_data_callback = NULL;
-    this->new_tcp_connect_callback = NULL;
-    this->received_udp_data_callback = NULL;
+    this->output_ip_data_callback = nullptr;
+    this->new_tcp_connect_callback = nullptr;
+    this->received_udp_data_callback = nullptr;
     
 }
 
 pip_netif * pip_netif::shared() {
     
-    if (netif == NULL) {
+    if (netif == nullptr) {
         _lock.lock();
-        if (netif == NULL) {
+        if (netif == nullptr) {
             netif = new pip_netif();
         }
         _lock.unlock();
@@ -107,7 +107,7 @@ void pip_netif::output4(pip_buf * buf, pip_uint8 proto, pip_in_addr src, pip_in_
     pip_debug_output_ip(hdr, "ip_output");
 #endif
     
-    ip_head_buf->set_next(NULL);
+    ip_head_buf->set_next(nullptr);
     delete ip_head_buf;
 }
 
@@ -135,7 +135,7 @@ void pip_netif::output6(pip_buf * buf, pip_uint8 proto, pip_in6_addr src, pip_in
         this->output_ip_data_callback(this, ip_head_buf);
     }
     
-    ip_head_buf->set_next(NULL);
+    ip_head_buf->set_next(nullptr);
     delete ip_head_buf;
 }
 

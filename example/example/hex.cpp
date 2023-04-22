@@ -18,7 +18,7 @@ uint8_t * hex::decode(const char * str, size_t *outlen){
     size_t datalen = (slen + 1) / 2;
     uint8_t *data = (uint8_t *)calloc(datalen, sizeof(uint8_t));
     
-    if (outlen != NULL) {
+    if (outlen != nullptr) {
         *outlen = datalen;
     }
     

@@ -18,7 +18,7 @@
 
 
 int tun_sock_fd = -1;
-dispatch_queue_t queue = dispatch_queue_create("queue", NULL);
+dispatch_queue_t queue = dispatch_queue_create("queue", nullptr);
 static std::map<pip_uint32, dispatch_source_t> conn_read_sources;
 
 void read_once(pip_tcp *tcp) {
@@ -41,7 +41,7 @@ void read_once(pip_tcp *tcp) {
                 dispatch_suspend(source);
             } else {
                 free(tcp->arg);
-                tcp->arg = NULL;
+                tcp->arg = nullptr;
                 tcp->close();
                 dispatch_source_cancel(source);
             }
@@ -197,7 +197,7 @@ void _pip_netif_received_udp_data_callback(pip_netif * netif, void * buffer, pip
     
     // - 接受数据
     uint8_t * recv_buffer = (uint8_t *)malloc(65535);
-    ret = recvfrom(fd, (void *)recv_buffer, 65535, 0, NULL, NULL);
+    ret = recvfrom(fd, (void *)recv_buffer, 65535, 0, nullptr, nullptr);
     if (ret <= 0) {
         free(recv_buffer);
         close(fd);

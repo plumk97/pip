@@ -109,7 +109,7 @@ pip_uint16 pip_inet_checksum_buf(pip_buf * buf, pip_uint8 proto, pip_in_addr src
     sum += (len & 0x0000FFFF) >> 0;
     
     
-    for (pip_buf * q = buf; q != NULL; q = q->get_next()) {
+    for (pip_buf * q = buf; q != nullptr; q = q->get_next()) {
         sum = pip_standard_checksum(q->get_payload(), q->get_payload_len(), sum);
     }
 
@@ -144,7 +144,7 @@ pip_uint16 pip_inet6_checksum_buf(pip_buf * buf, pip_uint8 proto, pip_in6_addr s
     sum += (len & 0xFFFF0000) >> 16;
     sum += (len & 0x0000FFFF) >> 0;
     
-    for (pip_buf * q = buf; q != NULL; q = q->get_next()) {
+    for (pip_buf * q = buf; q != nullptr; q = q->get_next()) {
         sum = pip_standard_checksum(q->get_payload(), q->get_payload_len(), sum);
     }
     

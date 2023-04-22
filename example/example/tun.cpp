@@ -38,7 +38,7 @@ int open_tun_socket () {
 
     err = ioctl(fd, CTLIOCGINFO, &info);
     if (err != 0) {
-        perror(NULL);
+        perror(nullptr);
         close(fd);
         return err;
     };
@@ -52,7 +52,7 @@ int open_tun_socket () {
     
     err = connect(fd, (struct sockaddr *)&addr, sizeof (addr));
     if (err != 0) {
-        perror(NULL);
+        perror(nullptr);
         close(fd);
         return err;
     };
@@ -65,7 +65,7 @@ int open_tun_socket () {
     socklen_t ifname_len = sizeof(ifname);
     err = getsockopt(fd, SYSPROTO_CONTROL, UTUN_OPT_IFNAME, ifname, &ifname_len);
     if (err == -1) {
-        perror(NULL);
+        perror(nullptr);
         close(fd);
         return err;
     }
@@ -75,7 +75,7 @@ int open_tun_socket () {
     cmd << "ifconfig " << ifname << " 192.168.33.1 192.168.33.1 netmask 255.255.255.255 mtu " << PIP_MTU << " up";
     err = std::system(cmd.str().c_str());
     if (err != 0) {
-        perror(NULL);
+        perror(nullptr);
         close(fd);
         return err;
     }
@@ -83,7 +83,7 @@ int open_tun_socket () {
     // 设置路由
     err = std::system("route -n add -net 1.1.1.1/32 192.168.33.1");
     if (err != 0) {
-        perror(NULL);
+        perror(nullptr);
         close(fd);
         return err;
     }

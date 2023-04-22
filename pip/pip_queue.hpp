@@ -23,8 +23,8 @@ class pip_queue {
 public:
     pip_queue() {
         this->_size = 0;
-        this->_head = NULL;
-        this->_foot = NULL;
+        this->_head = nullptr;
+        this->_foot = nullptr;
     };
     
     ~pip_queue() {
@@ -36,19 +36,19 @@ public:
             return this->_head->value;
         }
         
-        return NULL;
+        return nullptr;
     };
     
     void push(T obj) {
         pip_queue_node<T> * node = new pip_queue_node<T>;
         node->value = obj;
-        node->next = NULL;
+        node->next = nullptr;
         
-        if (this->_head == NULL) {
+        if (this->_head == nullptr) {
             this->_head = node;
         }
         
-        if (this->_foot == NULL) {
+        if (this->_foot == nullptr) {
             this->_foot = node;
         } else {
             this->_foot->next = node;
@@ -65,21 +65,21 @@ public:
             if (this->_head == this->_foot) {
                 
                 delete this->_head;
-                this->_head = NULL;
-                this->_foot = NULL;
+                this->_head = nullptr;
+                this->_foot = nullptr;
                 
             } else {
                 
                 delete this->_head;
-                this->_head = NULL;
+                this->_head = nullptr;
             }
             
             this->_head = node;
             this->_size -= 1;
 
             if (this->_size <= 0) {
-                this->_head = NULL;
-                this->_foot = NULL;
+                this->_head = nullptr;
+                this->_foot = nullptr;
             }
         }
     };

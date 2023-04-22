@@ -22,8 +22,8 @@ pip_buf::pip_buf(void * payload, pip_uint32 payload_len, pip_uint8 is_copy) {
     this->is_alloc = is_copy;
     this->total_len = this->payload_len;
     
-    this->next = NULL;
-    this->prev = NULL;
+    this->next = nullptr;
+    this->prev = nullptr;
 }
 
 pip_buf::pip_buf(pip_uint32 length) {
@@ -32,22 +32,22 @@ pip_buf::pip_buf(pip_uint32 length) {
     this->payload_len = length;
     this->total_len = length;
     
-    this->next = NULL;
-    this->prev = NULL;
+    this->next = nullptr;
+    this->prev = nullptr;
 }
 
 pip_buf::~pip_buf() {
     
     if (this->prev) {
         this->prev->total_len -= this->total_len;
-        this->prev->next = NULL;
-        this->prev = NULL;
+        this->prev->next = nullptr;
+        this->prev = nullptr;
     }
     
     delete this->next;
     
     if (this->is_alloc && this->payload_len > 0) {
-        free(this->payload);
+        operator delete(this->payload);
     }
     
     this->total_len = 0;
@@ -55,19 +55,19 @@ pip_buf::~pip_buf() {
 }
 
 void pip_buf::set_next(pip_buf *buf) {
-    if (buf == NULL) {
+    if (buf == nullptr) {
         if (this->next) {
             this->total_len -= this->next->total_len;
-            this->next->prev = NULL;
-            this->next = NULL;
+            this->next->prev = nullptr;
+            this->next = nullptr;
         }
         
         return;
     }
     
-    if (this->next != NULL) {
+    if (this->next != nullptr) {
         this->total_len -= this->next->total_len;
-        this->next->prev = NULL;
+        this->next->prev = nullptr;
     }
     
     this->total_len += buf->total_len;
