@@ -119,7 +119,7 @@ bool bridge_wintun::create_tun_interface(_In_z_ LPCWSTR name, _In_z_ LPCWSTR tun
     
     AddressRow.DadState = IpDadStatePreferred;
     AddressRow.OnLinkPrefixLength = prefix_length;
-
+    
     AddressRow.Address.Ipv4.sin_family = AF_INET;
     if (!inet_pton(AF_INET, addr, &AddressRow.Address.Ipv4.sin_addr)) {
         goto failure;
@@ -176,15 +176,15 @@ void bridge_wintun::set_received_packet_callback(std::function<void(BYTE* packet
 
 void bridge_wintun::send_packet(_In_ pip_buf* buf)
 {
-    BYTE* OutgoingPacket = WintunAllocateSendPacket(Session, buf->get_total_len());
+    BYTE* OutgoingPacket = WintunAllocateSendPacket(Session, buf->total_len());
     if (OutgoingPacket)
     {
         pip_buf* p = buf;
         int offset = 0;
         while (p) {
-            memcpy(OutgoingPacket + offset, p->get_payload(), p->get_payload_len());
-            offset += p->get_payload_len();
-            p = p->get_next();
+            memcpy(OutgoingPacket + offset, p->payload(), p->payload_len());
+            offset += p->payload_len();
+            p = p->next();
         }
        
         WintunSendPacket(Session, OutgoingPacket);

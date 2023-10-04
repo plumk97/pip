@@ -9,33 +9,26 @@
 static HANDLE QuitEvent;
 static bool IsRunning;
 
-void read_thread(_In_ pip_tcp* tcp) {
-    
-    int fd = *((int*)tcp->arg());
+void read_once(int fd, pip_tcp* tcp) {
     int maxlen = 65535 << tcp->opp_wind_shift();
-    while (true)
-    {
-        uint8_t* buffer = (uint8_t*)malloc(maxlen);
-        int len = recv(fd, (char *)buffer, maxlen, 0);
-        std::cout << len << std::endl;
-        if (len <= 0) {
-            free(tcp->arg());
-            tcp->set_arg(nullptr);
-            free(buffer);
-            tcp->close();
-            break;
-        }
-        else {
-            tcp->write(buffer, len, 0);
-        }
+    char* buffer = (char*)malloc(maxlen);
+
+    int len = recv(fd, buffer, maxlen, 0);
+    if (len <= 0) {
         free(buffer);
+        closesocket(fd);
+        tcp->close();
+        return;
     }
-    
+
+    tcp->write(buffer, (pip_uint32)len, 0);
+    free(buffer);
 }
 
 
 void _pip_tcp_connected_callback(pip_tcp* tcp) {
-    std::thread thread(read_thread, tcp);
+    int fd = *((int*)tcp->arg());
+    std::thread thread(read_once, fd, tcp);
     thread.detach();
 
 }
@@ -47,14 +40,15 @@ void _pip_tcp_received_callback(pip_tcp* tcp, const void* buffer, pip_uint32 buf
         int fd = *((int*)tcp->arg());
         send(fd, (const char*)buffer, buffer_len, 0);
     }
-    std::cout << "recv" << buffer_len << std::endl;
     /// 调用该方法更新窗口
     tcp->received(buffer_len);
 }
 
 void _pip_tcp_written_callback(pip_tcp* tcp, pip_uint32 writeen_len, bool has_push, bool is_drop) {
-    if (tcp->arg() && (has_push || writeen_len == 0)) {
-
+    int fd = *((int*)tcp->arg());
+    if (has_push || writeen_len == 0) {
+        std::thread thread(read_once, fd, tcp);
+        thread.detach();
     }
 }
 
@@ -73,8 +67,8 @@ void _pip_netif_output_ip_data_callback(pip_netif* netif, pip_buf* buf) {
 
 /// 接受到TCP连接
 void _pip_netif_new_tcp_connect_callback(pip_netif* netif, pip_tcp* tcp, const void* take_data, pip_uint16 take_data_len) {
-    std::cout << "tcp " << tcp->ip_header()->src_str << ":" << tcp->src_port() << "<->" << tcp->ip_header()->dst_str << ":" << tcp->dst_port() << std::endl;
-    if (strcmp(tcp->ip_header()->dst_str, "1.1.1.1") != 0) {
+    std::cout << "tcp " << tcp->ip_header()->src_str() << ":" << tcp->src_port() << "<->" << tcp->ip_header()->dst_str() << ":" << tcp->dst_port() << std::endl;
+    if (strcmp(tcp->ip_header()->dst_str(), "1.1.1.1") != 0) {
         return;
     }
 
@@ -206,7 +200,7 @@ static void receive_packet_callback(BYTE * packet, DWORD packet_size, bool is_st
     if (packet[0] >> 4 == 6) {
         return;
     }
-    //printByteArray(packet, packet_size);
+    
     pip_netif::shared()->input(packet);
 }
 

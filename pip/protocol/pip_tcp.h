@@ -8,6 +8,9 @@
 #define pip_tcp_hpp
 
 #include <thread>
+#include <mutex>
+#include <functional>
+
 #include "../pip_type.h"
 #include "../pip_queue.h"
 #include "../pip_buf.h"
