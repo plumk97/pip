@@ -7,8 +7,9 @@
 #ifndef pip_debug_hpp
 #define pip_debug_hpp
 
-#include "pip_type.hpp"
-#include "pip_tcp.hpp"
+#include "pip_type.h"
+#include "protocol/pip_tcp.h"
+#include "protocol/pip_tcp_packet.h"
 
 /// 打印IP
 /// @param hdr _

@@ -7,7 +7,7 @@
 #ifndef pip_queue_hpp
 #define pip_queue_hpp
 
-#include "pip_type.hpp"
+#include "pip_type.h"
 
 template <class T>
 class pip_queue_node {

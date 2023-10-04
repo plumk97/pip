@@ -1,6 +1,6 @@
 # pip
 
-一个内存使用极少的轻量级的单线程TCP/IP协议栈,  当前支持IP, IPv6, ICMP, TCP, UDP.
+一个内存使用极少的轻量级的线程安全的TCP/IP协议栈, 当前支持IP, IPv6, ICMP, TCP, UDP.
 
 当前只在macOS, iOS平台测试通过
 
@@ -8,7 +8,6 @@
 1. MTU默认为9000
 2. TCP每个数据包超时时间为2秒, 重传2次
 3. 自身window固定为65535, 对方window兼容 window scaling
-4. 没有做线程安全处理, 多线程使用请注意处理线程冲突
 
 ## 性能测试
 
@@ -33,16 +32,16 @@
 ```
 ~ iperf3 -c 1.1.1.1
 [ ID] Interval           Transfer     Bitrate
-[  5]   0.00-10.00  sec  7.04 GBytes  6.05 Gbits/sec                  sender
-[  5]   0.00-10.00  sec  7.04 GBytes  6.05 Gbits/sec                  receiver
+[  5]   0.00-10.00  sec  8.35 GBytes  7.17 Gbits/sec                  sender
+[  5]   0.00-10.00  sec  8.35 GBytes  7.17 Gbits/sec                  receiver
 ```
 
 **下载测试**
 ```
 ~ iperf3 -c 1.1.1.1 -R
 [ ID] Interval           Transfer     Bitrate
-[  5]   0.00-10.01  sec  5.27 GBytes  4.52 Gbits/sec                  sender
-[  5]   0.00-10.00  sec  5.25 GBytes  4.51 Gbits/sec                  receiver
+[  5]   0.00-10.00  sec  5.58 GBytes  4.79 Gbits/sec                  sender
+[  5]   0.00-10.00  sec  5.53 GBytes  4.75 Gbits/sec                  receiver
 ```
 
 ## Example

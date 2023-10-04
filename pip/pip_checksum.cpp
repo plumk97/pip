@@ -4,7 +4,7 @@
 //  Created by Plumk on 2021/3/11.
 //
 
-#include "pip_checksum.hpp"
+#include "pip_checksum.h"
 
 pip_uint32 pip_fold_uint32(pip_uint32 num) {
     return (num & 0x0000FFFFUL) + (num >> 16);
@@ -68,8 +68,6 @@ pip_uint16 pip_inet6_checksum(const void * payload, pip_uint8 proto, pip_in6_add
     pip_uint32 sum = 0;
     pip_uint32 addr = 0;
     
-    /// 加上 源地址 与 目的地址
-    /// 注意字节序
     for (pip_uint8 i = 0; i < 4; i ++) {
 
         addr = ntohl(_src[i]);
@@ -104,13 +102,13 @@ pip_uint16 pip_inet_checksum_buf(pip_buf * buf, pip_uint8 proto, pip_in_addr src
     
     sum += (pip_uint16)proto;
     
-    pip_uint32 len = buf->get_total_len();
+    pip_uint32 len = buf->total_len();
     sum += (len & 0xFFFF0000) >> 16;
     sum += (len & 0x0000FFFF) >> 0;
     
     
-    for (pip_buf * q = buf; q != nullptr; q = q->get_next()) {
-        sum = pip_standard_checksum(q->get_payload(), q->get_payload_len(), sum);
+    for (pip_buf * q = buf; q != nullptr; q = q->next()) {
+        sum = pip_standard_checksum(q->payload(), q->payload_len(), sum);
     }
 
     return ~((pip_uint16)sum);
@@ -125,8 +123,6 @@ pip_uint16 pip_inet6_checksum_buf(pip_buf * buf, pip_uint8 proto, pip_in6_addr s
     pip_uint32 sum = 0;
     pip_uint32 addr = 0;
     
-    /// 加上 源地址 与 目的地址
-    /// 注意字节序
     for (pip_uint8 i = 0; i < 4; i ++) {
 
         addr = ntohl(_src[i]);
@@ -140,12 +136,12 @@ pip_uint16 pip_inet6_checksum_buf(pip_buf * buf, pip_uint8 proto, pip_in6_addr s
     
     sum += (pip_uint16)proto;
     
-    pip_uint32 len = buf->get_total_len();
+    pip_uint32 len = buf->total_len();
     sum += (len & 0xFFFF0000) >> 16;
     sum += (len & 0x0000FFFF) >> 0;
     
-    for (pip_buf * q = buf; q != nullptr; q = q->get_next()) {
-        sum = pip_standard_checksum(q->get_payload(), q->get_payload_len(), sum);
+    for (pip_buf * q = buf; q != nullptr; q = q->next()) {
+        sum = pip_standard_checksum(q->payload(), q->payload_len(), sum);
     }
     
     return ~((pip_uint16)sum);

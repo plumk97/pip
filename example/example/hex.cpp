@@ -1,6 +1,5 @@
 //
 //  hex.cpp
-//  example
 //
 //  Created by Plumk on 2023/3/25.
 //  Copyright © 2023 Plumk. All rights reserved.

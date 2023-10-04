@@ -1,6 +1,5 @@
 //
 //  tun.cpp
-//  example
 //
 //  Created by Plumk on 2023/3/25.
 //  Copyright © 2023 Plumk. All rights reserved.
@@ -22,7 +21,7 @@
 #include <net/if_utun.h>
 #include <net/if.h>
 
-#include "pip_tcp.hpp"
+#include "pip_tcp.h"
 
 int open_tun_socket () {
     

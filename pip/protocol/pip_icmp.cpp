@@ -4,14 +4,14 @@
 //  Created by Plumk on 2022/1/13.
 //
 
-#include "pip_icmp.hpp"
-#include "pip_netif.hpp"
-#include "pip_debug.hpp"
+#include "pip_icmp.h"
+#include "../pip_netif.h"
+#include "../pip_debug.h"
 
 
-void pip_icmp::input(const void *bytes, pip_ip_header *ip_data) {
+void pip_icmp::input(const void *bytes, pip_ip_header *ip_header) {
     
-    pip_uint16 datalen = ip_data->datalen;
+    pip_uint16 datalen = ip_header->datalen();
     
 #if PIP_DEBUG
     struct icmp *hdr = (struct icmp *)bytes;
@@ -20,10 +20,10 @@ void pip_icmp::input(const void *bytes, pip_ip_header *ip_data) {
     
     pip_netif * netif = pip_netif::shared();
     if (netif->received_icmp_data_callback) {
-        netif->received_icmp_data_callback(netif, (void *)bytes, datalen, ip_data->src_str, ip_data->dst_str, ip_data->ttl);
+        netif->received_icmp_data_callback(netif, (void *)bytes, datalen, ip_header->src_str(), ip_header->dst_str(), ip_header->ttl());
     }
     
-    delete ip_data;
+    delete ip_header;
 }
 
 

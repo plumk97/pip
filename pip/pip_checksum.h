@@ -1,4 +1,4 @@
-//
+﻿//
 //  pip_checksum.hpp
 //
 //  Created by Plumk on 2021/3/11.
@@ -7,8 +7,8 @@
 #ifndef pip_checksum_hpp
 #define pip_checksum_hpp
 
-#include "pip_type.hpp"
-#include "pip_buf.hpp"
+#include "pip_type.h"
+#include "pip_buf.h"
 
 /// 计算checksum
 /// @param payload payload

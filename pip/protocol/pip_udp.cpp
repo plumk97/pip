@@ -4,12 +4,12 @@
 //  Created by Plumk on 2022/1/13.
 //
 
-#include "pip_udp.hpp"
-#include "pip_debug.hpp"
-#include "pip_netif.hpp"
-#include "pip_checksum.hpp"
+#include "pip_udp.h"
+#include "../pip_debug.h"
+#include "../pip_netif.h"
+#include "../pip_checksum.h"
 
-void pip_udp::input(const void *bytes, pip_ip_header * ip_header) {
+void pip_udp::input(const void *bytes, pip_ip_header *ip_header) {
     
     struct udphdr *hdr = (struct udphdr *)bytes;
     
@@ -21,7 +21,7 @@ void pip_udp::input(const void *bytes, pip_ip_header * ip_header) {
     
     pip_netif * netif = pip_netif::shared();
     if (netif->received_udp_data_callback) {
-        netif->received_udp_data_callback(netif, data, datalen, ip_header->src_str, src_port, ip_header->dst_str, dst_port, ip_header->version);
+        netif->received_udp_data_callback(netif, data, datalen, ip_header->src_str(), src_port, ip_header->dst_str(), dst_port, ip_header->version());
     }
     
 #if PIP_DEBUG
@@ -39,7 +39,7 @@ void pip_udp::output(const void *buffer, pip_uint16 buffer_len, const char * src
     
     pip_uint16 total_len = sizeof(struct udphdr) + buffer_len;
     
-    struct udphdr *hdr = (struct udphdr*)udp_head_buf->get_payload();
+    struct udphdr *hdr = (struct udphdr*)udp_head_buf->payload();
     hdr->uh_dport = htons(dst_port);
     hdr->uh_sport = htons(src_port);
     hdr->uh_ulen = htons(total_len);

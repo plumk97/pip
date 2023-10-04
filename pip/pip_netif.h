@@ -1,4 +1,4 @@
-//
+﻿//
 //  pip_netif.hpp
 //
 //  Created by Plumk on 2021/3/11.
@@ -7,9 +7,9 @@
 #ifndef pip_netif_hpp
 #define pip_netif_hpp
 
-#include "pip_type.hpp"
-#include "pip_buf.hpp"
-#include "pip_ip_header.hpp"
+#include "pip_type.h"
+#include "pip_buf.h"
+#include "pip_ip_header.h"
 
 class pip_netif;
 class pip_tcp;

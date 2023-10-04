@@ -1,0 +1,117 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="源文件">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="头文件">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="资源文件">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="头文件\pip">
+      <UniqueIdentifier>{ceaa0de6-d681-4381-9fb7-6c4898d44d8f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\pip\protocol">
+      <UniqueIdentifier>{b3eb9796-5421-40e7-85b3-b45a95df50ff}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\pip">
+      <UniqueIdentifier>{b4097ca9-007b-434e-bdf5-62bea8decf35}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\pip\protocol">
+      <UniqueIdentifier>{42c9f995-c6e7-474b-9e16-4b4fbbb42d8b}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="main.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\pip\pip_netif.cpp">
+      <Filter>源文件\pip</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\pip\pip_buf.cpp">
+      <Filter>源文件\pip</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\pip\pip_checksum.cpp">
+      <Filter>源文件\pip</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\pip\pip_debug.cpp">
+      <Filter>源文件\pip</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\pip\pip_ip_header.cpp">
+      <Filter>源文件\pip</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\pip\protocol\pip_icmp.cpp">
+      <Filter>源文件\pip\protocol</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\pip\protocol\pip_tcp.cpp">
+      <Filter>源文件\pip\protocol</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\pip\protocol\pip_udp.cpp">
+      <Filter>源文件\pip\protocol</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\pip\protocol\pip_tcp_packet.cpp">
+      <Filter>源文件\pip\protocol</Filter>
+    </ClCompile>
+    <ClCompile Include="bridge_wintun.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\pip\protocol\pip_icmp.h">
+      <Filter>头文件\pip\protocol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\pip\protocol\pip_tcp.h">
+      <Filter>头文件\pip\protocol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\pip\protocol\pip_udp.h">
+      <Filter>头文件\pip\protocol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\pip\pip.h">
+      <Filter>头文件\pip</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\pip\pip_buf.h">
+      <Filter>头文件\pip</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\pip\pip_checksum.h">
+      <Filter>头文件\pip</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\pip\pip_debug.h">
+      <Filter>头文件\pip</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\pip\pip_ip_header.h">
+      <Filter>头文件\pip</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\pip\pip_netif.h">
+      <Filter>头文件\pip</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\pip\pip_opt.h">
+      <Filter>头文件\pip</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\pip\pip_queue.h">
+      <Filter>头文件\pip</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\pip\pip_type.h">
+      <Filter>头文件\pip</Filter>
+    </ClInclude>
+    <ClInclude Include="wintun.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\pip\pip_macro.h">
+      <Filter>头文件\pip</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\pip\protocol\pip_tcp_manager.h">
+      <Filter>头文件\pip\protocol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\pip\protocol\pip_tcp_packet.h">
+      <Filter>头文件\pip\protocol</Filter>
+    </ClInclude>
+    <ClInclude Include="bridge_wintun.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

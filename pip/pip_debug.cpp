@@ -4,7 +4,7 @@
 //  Created by Plumk on 2022/1/9.
 //
 
-#include "pip_debug.hpp"
+#include "pip_debug.h"
 
 void pip_debug_output_iden(const char *iden) {
 #if PIP_DEBUG
@@ -44,14 +44,14 @@ void pip_debug_output_ipheader(pip_ip_header *header, const char *iden) {
     
 #if PIP_DEBUG
     pip_debug_output_iden(iden);
-    printf("version: %u \n", header->version);
-    printf("protocol: %u \n", header->protocol);
-    printf("has_options: %u \n", header->has_options);
-    printf("ttl: %u \n", header->ttl);
-    printf("headerlen: %u \n", header->headerlen);
-    printf("datalen: %u \n", header->datalen);
-    printf("src_str: %s \n", header->src_str);
-    printf("dst_str: %s \n", header->dst_str);
+    printf("version: %u \n", header->version());
+    printf("protocol: %u \n", header->protocol());
+    printf("has_options: %u \n", header->has_options());
+    printf("ttl: %u \n", header->ttl());
+    printf("headerlen: %u \n", header->headerlen());
+    printf("datalen: %u \n", header->datalen());
+    printf("src_str: %s \n", header->src_str());
+    printf("dst_str: %s \n", header->dst_str());
     printf("\n\n");
 #endif
     
@@ -81,8 +81,8 @@ void pip_debug_output_udp(struct udphdr *hdr, const char *iden) {
 void pip_debug_output_tcp(pip_tcp * tcp, pip_tcp_packet * packet, const char *iden) {
     
 #if PIP_DEBUG
-    tcphdr * hdr = packet->get_hdr();
-    pip_debug_output_tcp(tcp, hdr, packet->get_payload_len(), iden);
+    tcphdr * hdr = packet->hdr();
+    pip_debug_output_tcp(tcp, hdr, packet->payload_len(), iden);
 #endif
     
 }
@@ -94,14 +94,14 @@ void pip_debug_output_tcp(pip_tcp * tcp, struct tcphdr *hdr, pip_uint32 datalen,
         return;
     }
     
-    pip_ip_header * ip_header = tcp->ip_header;
+    pip_ip_header * ip_header = tcp->ip_header();
     pip_debug_output_iden(iden);
     if (ip_header) {
-        printf("src %s port %u\n", ip_header->src_str, tcp->src_port);
-        printf("dst %s port %u\n", ip_header->dst_str, tcp->dst_port);
+        printf("src %s port %u\n", ip_header->src_str(), tcp->src_port());
+        printf("dst %s port %u\n", ip_header->dst_str(), tcp->dst_port());
     }
     
-    printf("iden: %u\n", tcp->get_iden());
+    printf("iden: %u\n", tcp->iden());
     
     printf("flags: ");
     if (hdr->th_flags & TH_FIN) {
@@ -137,9 +137,9 @@ void pip_debug_output_tcp(pip_tcp * tcp, struct tcphdr *hdr, pip_uint32 datalen,
     }
     printf("\n");
     
-    printf("win: %u\n", tcp->wind);
-    printf("ack: %u\n", tcp->ack);
-    printf("seq: %u\n", tcp->seq);
+    printf("win: %u\n", tcp->wind());
+    printf("ack: %u\n", tcp->ack());
+    printf("seq: %u\n", tcp->seq());
     
     printf("opp_win: %u\n", ntohs(hdr->th_win));
     printf("opp_ack: %u\n", ntohl(hdr->th_ack));
