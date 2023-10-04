@@ -2,7 +2,7 @@
 
 一个内存使用极少的轻量级的线程安全的TCP/IP协议栈, 当前支持IP, IPv6, ICMP, TCP, UDP.
 
-当前只在macOS, iOS平台测试通过
+支持macOS、iOS、Windows平台
 
 ## 注意
 1. MTU默认为9000
@@ -13,8 +13,8 @@
 
 **测试平台**
 
-- OS: macOS 12.6
-- CPU: Intel(R) Core(TM) i5-8500B CPU @ 3.00GHz
+- OS: macOS 13.5.1
+- CPU: Apple M2
 
 **测试流程**
 
@@ -31,17 +31,17 @@
 **上传测试**
 ```
 ~ iperf3 -c 1.1.1.1
-[ ID] Interval           Transfer     Bitrate
-[  5]   0.00-10.00  sec  8.35 GBytes  7.17 Gbits/sec                  sender
-[  5]   0.00-10.00  sec  8.35 GBytes  7.17 Gbits/sec                  receiver
+[ ID] Interval           Transfer     Bitrate         Retr
+[  5]   0.00-10.00  sec  8.82 GBytes  7.58 Gbits/sec    0             sender
+[  5]   0.00-10.00  sec  8.82 GBytes  7.58 Gbits/sec                  receiver
 ```
 
 **下载测试**
 ```
 ~ iperf3 -c 1.1.1.1 -R
-[ ID] Interval           Transfer     Bitrate
-[  5]   0.00-10.00  sec  5.58 GBytes  4.79 Gbits/sec                  sender
-[  5]   0.00-10.00  sec  5.53 GBytes  4.75 Gbits/sec                  receiver
+[ ID] Interval           Transfer     Bitrate         Retr
+[  5]   0.00-10.00  sec  7.52 GBytes  6.46 Gbits/sec    0             sender
+[  5]   0.00-10.00  sec  7.45 GBytes  6.40 Gbits/sec                  receiver
 ```
 
 ## Example
