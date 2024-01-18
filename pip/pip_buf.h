@@ -16,7 +16,7 @@ class pip_buf {
     PIP_READONLY_PROPERTY(pip_uint32, payload_len);
     PIP_READONLY_PROPERTY(pip_uint8, is_alloc);
     PIP_READONLY_PROPERTY(pip_uint32, total_len);
-    PIP_READONLY_PROPERTY(pip_buf *, prev);
+
     
     pip_buf *_next;
     
