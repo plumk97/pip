@@ -20,8 +20,16 @@
 #define PIP_DEBUG           0
 #endif
 
-#define PIP_MTU             9000
+#ifndef PIP_MTU
+#define PIP_MTU 9000
+#endif
+
+#ifndef PIP_TCP_WIND
 #define PIP_TCP_WIND        65535
+#endif
+
+#ifndef PIP_TCP_MAX_CONNS
 #define PIP_TCP_MAX_CONNS   65535
+#endif
 
 #endif /* pip_define_h */

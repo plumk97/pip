@@ -146,7 +146,7 @@ void pip_tcp::timer_tick() {
         }
         
         pip_tcp_packet * packet = tcp->packet_queue()->front();
-        if (!packet || cur_time - packet->send_time() < 2000) {
+        if (cur_time - packet->send_time() < 2000) {
             continue;
         }
         
