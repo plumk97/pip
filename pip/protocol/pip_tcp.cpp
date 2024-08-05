@@ -29,7 +29,7 @@ pip_uint32 increase_seq(pip_uint32 seq, pip_uint8 flags, pip_uint32 datalen) {
         return seq + datalen;
     }
     
-    if (flags & TH_SYN || flags & TH_FIN) {
+    if ((flags & TH_SYN) || (flags & TH_FIN)) {
         return seq + 1;
     }
     return seq;
@@ -127,66 +127,52 @@ void pip_tcp::timer_tick() {
         pip_tcp * tcp = iter->second;
         iter++;
         
-        bool is_remove = false;
-        
-        do {
-            std::unique_lock<std::mutex> lock(*tcp->_mutex);
-            
-            if (tcp->status() == pip_tcp_status_released) {
-                is_remove = true;
-                break;
-            }
-            
-            if ((tcp->status() == pip_tcp_status_fin_wait_1 || tcp->status() == pip_tcp_status_fin_wait_2 || tcp->status() == pip_tcp_status_close_wait) &&
-                cur_time - tcp->fin_time() >= 20000) {
-                /// 处于等待关闭状态 并且等待时间已经大于20秒 直接关闭
-                tcp->release(&lock);
-                is_remove = true;
-                break;
-            }
-            
-            if (tcp->packet_queue()->empty()) {
-                break;
-            }
-            
-            pip_tcp_packet * packet = tcp->packet_queue()->front();
-            if (packet) {
-                if (cur_time - packet->send_time() >= 2000) {
-                    /// 数据超过2秒没有确认
-
-                    if (packet->send_count() > 2) {
-                        /// 已经发送过2次的直接丢弃
-                        tcp->packet_queue()->pop();
-                        
-                        
-                        if (packet->payload_len() > 0) {
-                            bool has_push = packet->hdr()->th_flags & TH_PUSH;
-                            if (has_push) {
-                                tcp->set_is_wait_push_ack(false);
-                            }
-
-                            if (tcp->written_callback) {
-                                lock.unlock();
-                                tcp->written_callback(tcp, packet->payload_len(), has_push, true);
-                                lock.lock();
-                            }
-                        }
-                        
-
-                        delete packet;
-
-
-                    } else {
-                        /// 小于2次的重发
-                        tcp->resend_packet(packet);
-                    }
-                }
-            }
-        } while (false);
-        
-        if (is_remove) {
+        std::unique_lock<std::mutex> lock(*tcp->_mutex);
+        if (tcp->status() == pip_tcp_status_released) {
             tcp_manager->remove_tcp(tcp->iden());
             delete tcp;
+            continue;
+        }
+        
+        if ((tcp->status() == pip_tcp_status_fin_wait_1 || tcp->status() == pip_tcp_status_fin_wait_2 || tcp->status() == pip_tcp_status_close_wait) &&
+            cur_time - tcp->fin_time() >= 20000) {
+            /// 处于等待关闭状态 并且等待时间已经大于20秒 直接关闭
+            tcp->release(&lock);
+            continue;
+        }
+        
+        if (tcp->packet_queue()->empty()) {
+            continue;
+        }
+        
+        pip_tcp_packet * packet = tcp->packet_queue()->front();
+        if (!packet || cur_time - packet->send_time() < 2000) {
+            continue;
+        }
+        
+        /// 数据超过2秒没有确认
+        if (packet->send_count() > 2) {
+            /// 已经发送过2次的直接丢弃
+            tcp->packet_queue()->pop();
+            
+            if (packet->payload_len() > 0) {
+                bool has_push = packet->hdr()->th_flags & TH_PUSH;
+                if (has_push) {
+                    tcp->set_is_wait_push_ack(false);
+                }
+
+                if (tcp->written_callback) {
+                    lock.unlock();
+                    tcp->written_callback(tcp, packet->payload_len(), has_push, true);
+                    lock.lock();
+                }
+            }
+            
+            delete packet;
+            
+        } else {
+            /// 小于2次的重发
+            tcp->resend_packet(packet);
         }
     }
 }
