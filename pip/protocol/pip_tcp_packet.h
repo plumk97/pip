@@ -15,11 +15,8 @@
 class pip_tcp;
 class pip_tcp_packet {
     
-    /// raw data
-    PIP_PRIVATE_PROPERTY(pip_uint8 *, buffer)
-    
     /// 头部 buf
-    PIP_READONLY_PROPERTY(pip_buf *, head_buf);
+    PIP_READONLY_PROPERTY(std::shared_ptr<pip_buf>, head_buf);
     
     /// 数据长度
     PIP_READONLY_PROPERTY(pip_uint32, payload_len);
@@ -32,7 +29,7 @@ class pip_tcp_packet {
     
 public:
     ~pip_tcp_packet();
-    pip_tcp_packet(pip_tcp *tcp, pip_uint8 flags, pip_buf * option_buf, pip_buf * payload_buf);
+    pip_tcp_packet(std::shared_ptr<pip_tcp> tcp, pip_uint8 flags, std::shared_ptr<pip_buf> option_buf, std::shared_ptr<pip_buf> payload_buf);
   
     struct tcphdr * hdr();
     /// 发送一次调用一次

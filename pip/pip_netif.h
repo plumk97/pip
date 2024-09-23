@@ -17,14 +17,14 @@ class pip_tcp;
 /// 输出IP包数据
 /// @param netif _
 /// @param buf IP包数据
-typedef void (*pip_netif_output_ip_data_callback) (pip_netif * netif, pip_buf * buf);
+typedef void (*pip_netif_output_ip_data_callback) (pip_netif & netif, std::shared_ptr<pip_buf> buf);
 
 /// 接受到一个新的TCP连接
 /// @param netif _
 /// @param tcp TCP连接对象
 /// @param handshake_data 建立连接的握手数据 连接成功调用 connected 方法需要传入
 /// @param handshake_data_len 握手数据长度
-typedef void (*pip_netif_new_tcp_connect_callback) (pip_netif * netif, pip_tcp * tcp, const void * handshake_data, pip_uint16 handshake_data_len);
+typedef void (*pip_netif_new_tcp_connect_callback) (pip_netif & netif, std::shared_ptr<pip_tcp> tcp, const void * handshake_data, pip_uint16 handshake_data_len);
 
 /// 接受到UDP数据
 /// @param netif _
@@ -35,18 +35,22 @@ typedef void (*pip_netif_new_tcp_connect_callback) (pip_netif * netif, pip_tcp *
 /// @param dst_ip 目的地址
 /// @param dst_port 目的端口
 /// @param version IP协议版本 4 || 6
-typedef void (*pip_netif_received_udp_data_callback) (pip_netif * netif, void * buffer, pip_uint16 buffer_len, const char * src_ip, pip_uint16 src_port, const char * dst_ip, pip_uint16 dst_port, pip_uint8 version);
+typedef void (*pip_netif_received_udp_data_callback) (pip_netif & netif, void * buffer, pip_uint16 buffer_len, const char * src_ip, pip_uint16 src_port, const char * dst_ip, pip_uint16 dst_port, pip_uint8 version);
 
 // 接受到ICMP数据
-typedef void (*pip_netif_received_icmp_data_callback) (pip_netif * netif, void * buffer, pip_uint16 buffer_len, const char * src_ip, const char * dst_ip, pip_uint8 ttl);
+typedef void (*pip_netif_received_icmp_data_callback) (pip_netif & netif, void * buffer, pip_uint16 buffer_len, const char * src_ip, const char * dst_ip, pip_uint8 ttl);
 
 
 class pip_netif {
     pip_netif();
     ~pip_netif();
     
+    pip_netif(const pip_netif&) = delete;
+    pip_netif operator=(const pip_netif&) = delete;
+    
+    
 public:
-    static pip_netif * shared();
+    static pip_netif & shared();
     
     /// 输入IP包
     /// @param buffer _
@@ -57,8 +61,8 @@ public:
     /// @param proto _
     /// @param src _
     /// @param dst _
-    void output4(pip_buf * buf, pip_uint8 proto, pip_in_addr src, pip_in_addr dst);
-    void output6(pip_buf * buf, pip_uint8 proto, pip_in6_addr src, pip_in6_addr dst);
+    void output4(std::shared_ptr<pip_buf> buf, pip_uint8 proto, pip_in_addr src, pip_in_addr dst);
+    void output6(std::shared_ptr<pip_buf> buf, pip_uint8 proto, pip_in6_addr src, pip_in6_addr dst);
     
 public:
     pip_netif_output_ip_data_callback output_ip_data_callback;

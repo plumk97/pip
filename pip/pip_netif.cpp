@@ -15,12 +15,7 @@
 
 #include "pip_checksum.h"
 #include "pip_ip_header.h"
-#include "pip_debug.h"
 
-using namespace std;
-static pip_netif * netif = nullptr;
-static std::mutex _mutex;
-static std::thread timer;
 
 pip_netif::pip_netif() {
     this->_identifer = 0;
@@ -29,37 +24,35 @@ pip_netif::pip_netif() {
     this->new_tcp_connect_callback = nullptr;
     this->received_udp_data_callback = nullptr;
     
+    auto timer = std::thread([] {
+        while (true) {
+            pip_tcp::timer_tick();
+            std::this_thread::sleep_for(std::chrono::milliseconds(250));
+        }
+    });
+    timer.detach();
 }
 
-pip_netif * pip_netif::shared() {
+pip_netif::~pip_netif() {
     
-    if (netif == nullptr) {
-        std::lock_guard<std::mutex> lock(_mutex);
-        if (netif == nullptr) {
-            netif = new pip_netif();
-            timer = std::thread([] {
-                while (true) {
-                    pip_tcp::timer_tick();
-                    std::this_thread::sleep_for(std::chrono::milliseconds(250));
-                }
-            });
-        }
-    }
+}
+
+pip_netif & pip_netif::shared() {
+    static pip_netif netif;
     return netif;
 }
 
 void pip_netif::input(const void *buffer) {
     
-    pip_ip_header * ip_header = new pip_ip_header(buffer);
+    auto ip_header = std::make_shared<pip_ip_header>(buffer);
 #if PIP_DEBUG
-    pip_debug_output_ipheader(ip_header, "ip_input");
+//    pip_debug_output_ipheader(ip_header, "ip_input");
 #endif
     
     
     if (ip_header->version() == 4) {
         /// - 检测是否有options 不支持options
         if (ip_header->has_options()) {
-            delete ip_header;
             return;
         }
     }
@@ -79,15 +72,14 @@ void pip_netif::input(const void *buffer) {
             break;
             
         default:
-            delete ip_header;
             break;
     }
 }
 
 
-void pip_netif::output4(pip_buf * buf, pip_uint8 proto, pip_in_addr src, pip_in_addr dst) {
+void pip_netif::output4(std::shared_ptr<pip_buf> buf, pip_uint8 proto, pip_in_addr src, pip_in_addr dst) {
     
-    pip_buf * ip_head_buf = new pip_buf(sizeof(struct ip));
+    auto ip_head_buf = std::make_shared<pip_buf>(sizeof(struct ip));
     ip_head_buf->set_next(buf);
     
     struct ip *hdr = (struct ip *)ip_head_buf->payload();
@@ -105,20 +97,19 @@ void pip_netif::output4(pip_buf * buf, pip_uint8 proto, pip_in_addr src, pip_in_
     hdr->ip_sum = htons(pip_ip_checksum(hdr, sizeof(struct ip)));
     
     if (this->output_ip_data_callback) {
-        this->output_ip_data_callback(this, ip_head_buf);
+        this->output_ip_data_callback(*this, ip_head_buf);
     }
     
 #if PIP_DEBUG
-    pip_debug_output_ip(hdr, "ip_output");
+//    pip_debug_output_ip(hdr, "ip_output");
 #endif
     
     ip_head_buf->set_next(nullptr);
-    delete ip_head_buf;
 }
 
-void pip_netif::output6(pip_buf * buf, pip_uint8 proto, pip_in6_addr src, pip_in6_addr dst) {
+void pip_netif::output6(std::shared_ptr<pip_buf> buf, pip_uint8 proto, pip_in6_addr src, pip_in6_addr dst) {
  
-    pip_buf * ip_head_buf = new pip_buf(sizeof(struct ip6_hdr));
+    auto ip_head_buf = std::make_shared<pip_buf>(sizeof(struct ip6_hdr));
     ip_head_buf->set_next(buf);
     
     struct ip6_hdr *hdr = (struct ip6_hdr *)ip_head_buf->payload();
@@ -137,9 +128,8 @@ void pip_netif::output6(pip_buf * buf, pip_uint8 proto, pip_in6_addr src, pip_in
     hdr->ip6_dst = dst;
     
     if (this->output_ip_data_callback) {
-        this->output_ip_data_callback(this, ip_head_buf);
+        this->output_ip_data_callback(*this, ip_head_buf);
     }
     
     ip_head_buf->set_next(nullptr);
-    delete ip_head_buf;
 }

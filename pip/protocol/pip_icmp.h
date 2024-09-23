@@ -13,7 +13,7 @@
 class pip_icmp {
     
 public:
-    static void input(const void *bytes, pip_ip_header *ip_header);
+    static void input(const void *bytes, std::shared_ptr<pip_ip_header> ip_header);
     static void output(const void *buffer, pip_uint16 buffer_len, const char * src_ip, const char * dst_ip);
 };
 
