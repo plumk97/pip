@@ -91,8 +91,6 @@ void pip_tcp::release() {
 }
 
 void pip_tcp::timer_tick() {
-//    TCP_MANAGER_LOCK
-//    
     pip_uint64 cur_time = get_current_time();
     auto & manager = pip_tcp_manager::shared();
     if (manager.size() <= 0) {
@@ -123,28 +121,14 @@ void pip_tcp::timer_tick() {
         }
         
         auto packet = tcp->packet_queue()->front();
-        if (cur_time - packet->send_time() < 2000) {
+        if (cur_time - packet->send_time() < 1000) {
             continue;
         }
         
-        /// 数据超过2秒没有确认
-        if (packet->send_count() > 2) {
-            /// 已经发送过2次的直接丢弃
-            tcp->packet_queue()->pop();
-            
-            if (packet->payload_len() > 0) {
-                bool has_push = packet->hdr()->th_flags & TH_PUSH;
-                if (has_push) {
-                    tcp->set_is_wait_push_ack(false);
-                }
-
-                if (tcp->written_callback) {
-                    tcp->written_callback(tcp, packet->payload_len(), has_push, true);
-                }
-            }
-            
+        /// 数据超过5次没有确认断开连接
+        if (packet->send_count() > 5) {
+            tcp->reset();
         } else {
-            /// 小于2次的重发
             tcp->resend_packet(packet);
         }
     }
