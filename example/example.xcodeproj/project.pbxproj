@@ -9,6 +9,8 @@
 /* Begin PBXBuildFile section */
 		5122995C29CE8E1D00FFFF54 /* hex.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5122995A29CE8E1D00FFFF54 /* hex.cpp */; };
 		5122995F29CEA2F900FFFF54 /* tun.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5122995D29CEA2F900FFFF54 /* tun.cpp */; };
+		51335C2C2CA1DB29009EA7B3 /* pip_buf.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 51335C2A2CA1DB29009EA7B3 /* pip_buf.cpp */; };
+		51335C2F2CA1E047009EA7B3 /* pip_debug.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 51335C2E2CA1E047009EA7B3 /* pip_debug.cpp */; };
 		5160F1AB2A1B147600BE4D5A /* pip_tcp_packet.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5160F1A82A1B147600BE4D5A /* pip_tcp_packet.cpp */; };
 		5168ED512A231C0800D2CB96 /* tcp_birdge.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5168ED502A231C0800D2CB96 /* tcp_birdge.cpp */; };
 		51776DE32A1662E400EB6C14 /* pip_checksum.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 51776DCE2A1662E400EB6C14 /* pip_checksum.cpp */; };
@@ -16,9 +18,7 @@
 		51776DE52A1662E400EB6C14 /* pip_udp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 51776DD92A1662E400EB6C14 /* pip_udp.cpp */; };
 		51776DE62A1662E400EB6C14 /* pip_icmp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 51776DDA2A1662E400EB6C14 /* pip_icmp.cpp */; };
 		51776DE72A1662E400EB6C14 /* pip_tcp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 51776DDB2A1662E400EB6C14 /* pip_tcp.cpp */; };
-		51776DE82A1662E400EB6C14 /* pip_buf.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 51776DDD2A1662E400EB6C14 /* pip_buf.cpp */; };
 		51776DE92A1662E400EB6C14 /* pip_netif.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 51776DDF2A1662E400EB6C14 /* pip_netif.cpp */; };
-		51776DEA2A1662E400EB6C14 /* pip_debug.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 51776DE22A1662E400EB6C14 /* pip_debug.cpp */; };
 		518829C42A22183900B3DE02 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 518829C22A22183800B3DE02 /* main.cpp */; };
 /* End PBXBuildFile section */
 
@@ -39,6 +39,10 @@
 		5122995B29CE8E1D00FFFF54 /* hex.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = hex.hpp; sourceTree = "<group>"; };
 		5122995D29CEA2F900FFFF54 /* tun.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = tun.cpp; sourceTree = "<group>"; };
 		5122995E29CEA2F900FFFF54 /* tun.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = tun.hpp; sourceTree = "<group>"; };
+		51335C2A2CA1DB29009EA7B3 /* pip_buf.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = pip_buf.cpp; sourceTree = "<group>"; };
+		51335C2B2CA1DB29009EA7B3 /* pip_buf.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = pip_buf.h; sourceTree = "<group>"; };
+		51335C2D2CA1E047009EA7B3 /* pip_debug.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = pip_debug.h; sourceTree = "<group>"; };
+		51335C2E2CA1E047009EA7B3 /* pip_debug.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = pip_debug.cpp; sourceTree = "<group>"; };
 		5160F1A72A1B142B00BE4D5A /* pip_macro.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = pip_macro.h; sourceTree = "<group>"; };
 		5160F1A82A1B147600BE4D5A /* pip_tcp_packet.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = pip_tcp_packet.cpp; sourceTree = "<group>"; };
 		5160F1A92A1B147600BE4D5A /* pip_tcp_packet.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pip_tcp_packet.h; sourceTree = "<group>"; };
@@ -47,7 +51,6 @@
 		5168ED502A231C0800D2CB96 /* tcp_birdge.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = tcp_birdge.cpp; sourceTree = "<group>"; };
 		51776DCE2A1662E400EB6C14 /* pip_checksum.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = pip_checksum.cpp; sourceTree = "<group>"; };
 		51776DCF2A1662E400EB6C14 /* pip_opt.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pip_opt.h; sourceTree = "<group>"; };
-		51776DD02A1662E400EB6C14 /* pip_queue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pip_queue.h; sourceTree = "<group>"; };
 		51776DD12A1662E400EB6C14 /* pip_type.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pip_type.h; sourceTree = "<group>"; };
 		51776DD22A1662E400EB6C14 /* pip_checksum.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pip_checksum.h; sourceTree = "<group>"; };
 		51776DD32A1662E400EB6C14 /* pip_ip_header.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = pip_ip_header.cpp; sourceTree = "<group>"; };
@@ -59,12 +62,8 @@
 		51776DDA2A1662E400EB6C14 /* pip_icmp.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = pip_icmp.cpp; sourceTree = "<group>"; };
 		51776DDB2A1662E400EB6C14 /* pip_tcp.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = pip_tcp.cpp; sourceTree = "<group>"; };
 		51776DDC2A1662E400EB6C14 /* pip_netif.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pip_netif.h; sourceTree = "<group>"; };
-		51776DDD2A1662E400EB6C14 /* pip_buf.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = pip_buf.cpp; sourceTree = "<group>"; };
-		51776DDE2A1662E400EB6C14 /* pip_debug.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pip_debug.h; sourceTree = "<group>"; };
 		51776DDF2A1662E400EB6C14 /* pip_netif.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = pip_netif.cpp; sourceTree = "<group>"; };
 		51776DE02A1662E400EB6C14 /* pip_ip_header.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pip_ip_header.h; sourceTree = "<group>"; };
-		51776DE12A1662E400EB6C14 /* pip_buf.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pip_buf.h; sourceTree = "<group>"; };
-		51776DE22A1662E400EB6C14 /* pip_debug.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = pip_debug.cpp; sourceTree = "<group>"; };
 		518829C22A22183800B3DE02 /* main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		98C1B7B3272A4421004B2874 /* example */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = example; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -83,21 +82,20 @@
 		51776DCD2A1662E400EB6C14 /* pip */ = {
 			isa = PBXGroup;
 			children = (
-				51776DDD2A1662E400EB6C14 /* pip_buf.cpp */,
-				51776DE12A1662E400EB6C14 /* pip_buf.h */,
-				51776DCE2A1662E400EB6C14 /* pip_checksum.cpp */,
-				51776DD22A1662E400EB6C14 /* pip_checksum.h */,
-				51776DE22A1662E400EB6C14 /* pip_debug.cpp */,
-				51776DDE2A1662E400EB6C14 /* pip_debug.h */,
-				51776DD32A1662E400EB6C14 /* pip_ip_header.cpp */,
-				51776DE02A1662E400EB6C14 /* pip_ip_header.h */,
-				5160F1A72A1B142B00BE4D5A /* pip_macro.h */,
-				51776DDF2A1662E400EB6C14 /* pip_netif.cpp */,
-				51776DDC2A1662E400EB6C14 /* pip_netif.h */,
-				51776DCF2A1662E400EB6C14 /* pip_opt.h */,
-				51776DD02A1662E400EB6C14 /* pip_queue.h */,
-				51776DD12A1662E400EB6C14 /* pip_type.h */,
 				51776DD42A1662E400EB6C14 /* pip.h */,
+				51335C2B2CA1DB29009EA7B3 /* pip_buf.h */,
+				51335C2A2CA1DB29009EA7B3 /* pip_buf.cpp */,
+				51776DD22A1662E400EB6C14 /* pip_checksum.h */,
+				51776DCE2A1662E400EB6C14 /* pip_checksum.cpp */,
+				51335C2D2CA1E047009EA7B3 /* pip_debug.h */,
+				51335C2E2CA1E047009EA7B3 /* pip_debug.cpp */,
+				51776DE02A1662E400EB6C14 /* pip_ip_header.h */,
+				51776DD32A1662E400EB6C14 /* pip_ip_header.cpp */,
+				5160F1A72A1B142B00BE4D5A /* pip_macro.h */,
+				51776DDC2A1662E400EB6C14 /* pip_netif.h */,
+				51776DDF2A1662E400EB6C14 /* pip_netif.cpp */,
+				51776DCF2A1662E400EB6C14 /* pip_opt.h */,
+				51776DD12A1662E400EB6C14 /* pip_type.h */,
 				51776DD52A1662E400EB6C14 /* protocol */,
 			);
 			name = pip;
@@ -210,6 +208,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				51776DE92A1662E400EB6C14 /* pip_netif.cpp in Sources */,
+				51335C2F2CA1E047009EA7B3 /* pip_debug.cpp in Sources */,
 				5160F1AB2A1B147600BE4D5A /* pip_tcp_packet.cpp in Sources */,
 				518829C42A22183900B3DE02 /* main.cpp in Sources */,
 				51776DE32A1662E400EB6C14 /* pip_checksum.cpp in Sources */,
@@ -219,8 +218,7 @@
 				51776DE72A1662E400EB6C14 /* pip_tcp.cpp in Sources */,
 				5122995C29CE8E1D00FFFF54 /* hex.cpp in Sources */,
 				51776DE52A1662E400EB6C14 /* pip_udp.cpp in Sources */,
-				51776DE82A1662E400EB6C14 /* pip_buf.cpp in Sources */,
-				51776DEA2A1662E400EB6C14 /* pip_debug.cpp in Sources */,
+				51335C2C2CA1DB29009EA7B3 /* pip_buf.cpp in Sources */,
 				51776DE42A1662E400EB6C14 /* pip_ip_header.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

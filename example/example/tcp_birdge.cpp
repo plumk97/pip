@@ -11,7 +11,7 @@
 #include <sys/socket.h>
 #include <thread>
 
-void read_once(int fd, pip_tcp * tcp) {
+void read_once(int fd, std::shared_ptr<pip_tcp> tcp) {
     int maxlen = 65535 << tcp->opp_wind_shift();
     uint8_t * buffer = (uint8_t *)malloc(maxlen);
     
@@ -28,7 +28,7 @@ void read_once(int fd, pip_tcp * tcp) {
 }
 
 /// tcp接受到数据
-void _pip_tcp_received_callback(pip_tcp * tcp, const void * buffer, pip_uint32 buffer_len) {
+void _pip_tcp_received_callback(std::shared_ptr<pip_tcp> tcp, const void * buffer, pip_uint32 buffer_len) {
     int fd = *((int *)tcp->arg());
     send(fd, buffer, buffer_len, MSG_NOSIGNAL);
 
@@ -36,7 +36,7 @@ void _pip_tcp_received_callback(pip_tcp * tcp, const void * buffer, pip_uint32 b
     tcp->received(buffer_len);
 }
 
-void _pip_tcp_written_callback(pip_tcp * tcp, pip_uint32 writeen_len, bool has_push, bool is_drop) {
+void _pip_tcp_written_callback(std::shared_ptr<pip_tcp> tcp, pip_uint32 writeen_len, bool has_push, bool is_drop) {
     int fd = *((int *)tcp->arg());
     if (has_push || writeen_len == 0) {
         std::thread thread(read_once, fd, tcp);
@@ -44,18 +44,18 @@ void _pip_tcp_written_callback(pip_tcp * tcp, pip_uint32 writeen_len, bool has_p
     }
 }
 
-void _pip_tcp_connected_callback(pip_tcp* tcp) {
+void _pip_tcp_connected_callback(std::shared_ptr<pip_tcp> tcp) {
     int fd = *((int *)tcp->arg());
     std::thread thread(read_once, fd, tcp);
     thread.detach();
 }
 
-void _pip_tcp_closed_callback(pip_tcp * tcp, void *arg) {
+void _pip_tcp_closed_callback(std::shared_ptr<pip_tcp> tcp, void *arg) {
     int fd = *((int *)arg);
     close(fd);
 }
 
-void tcp_bridge(pip_tcp *tcp, const void * handshake_data, pip_uint16 take_data_len) {
+void tcp_bridge(std::shared_ptr<pip_tcp> tcp, const void * handshake_data, pip_uint16 take_data_len) {
     
     int fd = socket(AF_INET, SOCK_STREAM, 0);
     if (fd < 0) {

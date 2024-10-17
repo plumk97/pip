@@ -9,7 +9,7 @@
 #include "../pip_netif.h"
 #include "../pip_checksum.h"
 
-void pip_udp::input(const void *bytes, pip_ip_header *ip_header) {
+void pip_udp::input(const void *bytes, std::shared_ptr<pip_ip_header> ip_header) {
     
     struct udphdr *hdr = (struct udphdr *)bytes;
     
@@ -19,22 +19,21 @@ void pip_udp::input(const void *bytes, pip_ip_header *ip_header) {
     pip_uint16 datalen = ntohs(hdr->uh_ulen) - sizeof(struct udphdr);
     void * data = (pip_uint8 *)bytes + sizeof(struct udphdr);
     
-    pip_netif * netif = pip_netif::shared();
-    if (netif->received_udp_data_callback) {
-        netif->received_udp_data_callback(netif, data, datalen, ip_header->src_str(), src_port, ip_header->dst_str(), dst_port, ip_header->version());
+    pip_netif & netif = pip_netif::shared();
+    if (netif.received_udp_data_callback) {
+        netif.received_udp_data_callback(netif, data, datalen, ip_header->src_str(), src_port, ip_header->dst_str(), dst_port, ip_header->version());
     }
     
 #if PIP_DEBUG
     pip_debug_output_udp(hdr, "udp_input");
 #endif
     
-    delete ip_header;
 }
 
 void pip_udp::output(const void *buffer, pip_uint16 buffer_len, const char * src_ip, pip_uint16 src_port, const char * dst_ip, pip_uint16 dst_port) {
  
-    pip_buf * payload_buf = new pip_buf((void *)buffer, buffer_len, 0);
-    pip_buf * udp_head_buf = new pip_buf(sizeof(struct udphdr));
+    auto payload_buf = std::make_shared<pip_buf>(buffer, buffer_len, 0);
+    auto udp_head_buf = std::make_shared<pip_buf>(sizeof(struct udphdr));
     udp_head_buf->set_next(payload_buf);
     
     pip_uint16 total_len = sizeof(struct udphdr) + buffer_len;
@@ -56,7 +55,7 @@ void pip_udp::output(const void *buffer, pip_uint16 buffer_len, const char * src
         hdr->uh_sum = pip_inet_checksum_buf(udp_head_buf, IPPROTO_UDP, src, dst);
         hdr->uh_sum = htons(hdr->uh_sum);
         
-        pip_netif::shared()->output4(udp_head_buf, IPPROTO_UDP, src, dst);
+        pip_netif::shared().output4(udp_head_buf, IPPROTO_UDP, src, dst);
         
     } else if (inet_pton(AF_INET6, src_ip, &src6) > 0) {
         /// IPv6地址
@@ -66,10 +65,8 @@ void pip_udp::output(const void *buffer, pip_uint16 buffer_len, const char * src
         hdr->uh_sum = pip_inet6_checksum_buf(udp_head_buf, IPPROTO_UDP, src6, dst6);
         hdr->uh_sum = htons(hdr->uh_sum);
         
-        pip_netif::shared()->output6(udp_head_buf, IPPROTO_UDP, src6, dst6);
+        pip_netif::shared().output6(udp_head_buf, IPPROTO_UDP, src6, dst6);
     }
     
-
-    delete udp_head_buf;
     
 }

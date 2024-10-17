@@ -1,4 +1,4 @@
-﻿//
+//
 //  pip_checksum.hpp
 //
 //  Created by Plumk on 2021/3/11.
@@ -30,6 +30,6 @@ pip_uint16 pip_ip_checksum(const void * payload, pip_uint32 len);
 pip_uint16 pip_inet_checksum(const void * payload, pip_uint8 proto, pip_in_addr src, pip_in_addr dst, pip_uint16 len);
 pip_uint16 pip_inet6_checksum(const void * payload, pip_uint8 proto, pip_in6_addr src, pip_in6_addr dst, pip_uint16 len);
 
-pip_uint16 pip_inet_checksum_buf(pip_buf * buf, pip_uint8 proto, pip_in_addr src, pip_in_addr dst);
-pip_uint16 pip_inet6_checksum_buf(pip_buf * buf, pip_uint8 proto, pip_in6_addr src, pip_in6_addr dst);
+pip_uint16 pip_inet_checksum_buf(std::shared_ptr<pip_buf> buf, pip_uint8 proto, pip_in_addr src, pip_in_addr dst);
+pip_uint16 pip_inet6_checksum_buf(std::shared_ptr<pip_buf> buf, pip_uint8 proto, pip_in6_addr src, pip_in6_addr dst);
 #endif /* pip_checksum_hpp */

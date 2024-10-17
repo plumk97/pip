@@ -11,16 +11,16 @@
 #include "../pip_checksum.h"
 
 pip_tcp_packet::
-pip_tcp_packet(pip_tcp *tcp, pip_uint8 flags, pip_buf * option_buf, pip_buf * payload_buf) {
+pip_tcp_packet(std::shared_ptr<pip_tcp> tcp, pip_uint8 flags, std::shared_ptr<pip_buf> option_buf, std::shared_ptr<pip_buf> payload_buf) {
     
     this->_send_time = 0;
     this->_send_count = 0;
     
-    pip_uint8 * buffer = (pip_uint8 *)calloc(1, sizeof(struct tcphdr));
-    this->_buffer = buffer;
-    
     // -- 赋值BUF
-    pip_buf * head_buf = new pip_buf(buffer, sizeof(struct tcphdr), 0);
+    auto head_buf = std::make_shared<pip_buf>(sizeof(struct tcphdr));
+    pip_uint8 * buffer = (pip_uint8 *)head_buf->payload();
+    memset(buffer, 0, head_buf->payload_len());
+    
     if (option_buf != nullptr) {
         head_buf->set_next(option_buf);
         option_buf->set_next(payload_buf);
@@ -128,24 +128,12 @@ pip_tcp_packet(pip_tcp *tcp, pip_uint8 flags, pip_buf * option_buf, pip_buf * pa
 
 pip_tcp_packet::
 ~pip_tcp_packet() {
-    
-    if (this->_head_buf) {
-        delete this->_head_buf;
-        this->_head_buf = nullptr;
-    }
-    
-    if (this->_buffer) {
-        free(this->_buffer);
-        this->_buffer = nullptr;
-    }
+
 }
 
 struct tcphdr *
 pip_tcp_packet::hdr() {
-    if (this->_buffer != nullptr) {
-        return (struct tcphdr *)this->_buffer;
-    }
-    return nullptr;
+    return (struct tcphdr *)this->head_buf()->payload();
 }
 
 void

@@ -40,7 +40,7 @@ void pip_debug_output_ip(struct ip *hdr, const char *iden) {
 /// 打印IP
 /// @param header _
 /// @param iden 标识
-void pip_debug_output_ipheader(pip_ip_header *header, const char *iden) {
+void pip_debug_output_ipheader(std::shared_ptr<pip_ip_header> header, const char *iden) {
     
 #if PIP_DEBUG
     pip_debug_output_iden(iden);
@@ -78,7 +78,7 @@ void pip_debug_output_udp(struct udphdr *hdr, const char *iden) {
 /// @param tcp _
 /// @param packet _
 /// @param iden _
-void pip_debug_output_tcp(pip_tcp * tcp, pip_tcp_packet * packet, const char *iden) {
+void pip_debug_output_tcp(std::shared_ptr<pip_tcp> tcp, std::shared_ptr<pip_tcp_packet> packet, const char *iden) {
     
 #if PIP_DEBUG
     tcphdr * hdr = packet->hdr();
@@ -87,14 +87,14 @@ void pip_debug_output_tcp(pip_tcp * tcp, pip_tcp_packet * packet, const char *id
     
 }
 
-void pip_debug_output_tcp(pip_tcp * tcp, struct tcphdr *hdr, pip_uint32 datalen, const char *iden) {
+void pip_debug_output_tcp(std::shared_ptr<pip_tcp> tcp, struct tcphdr *hdr, pip_uint32 datalen, const char *iden) {
     
 #if PIP_DEBUG
     if (tcp == nullptr) {
         return;
     }
     
-    pip_ip_header * ip_header = tcp->ip_header();
+    auto ip_header = tcp->ip_header();
     pip_debug_output_iden(iden);
     if (ip_header) {
         printf("src %s port %u\n", ip_header->src_str(), tcp->src_port());

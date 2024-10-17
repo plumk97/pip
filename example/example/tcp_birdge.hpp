@@ -11,5 +11,5 @@
 #include <iostream>
 #include "pip.h"
 
-void tcp_bridge(pip_tcp *tcp, const void * take_data, pip_uint16 take_data_len);
+void tcp_bridge(std::shared_ptr<pip_tcp> tcp, const void * take_data, pip_uint16 take_data_len);
 #endif /* tcp_birdge_hpp */

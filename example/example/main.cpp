@@ -19,7 +19,7 @@
 int tun_sock_fd = -1;
 
 /// 输出IP包
-void _pip_netif_output_ip_data_callback (pip_netif * netif, pip_buf * buf) {
+void _pip_netif_output_ip_data_callback (pip_netif & netif, std::shared_ptr<pip_buf> buf) {
     
     uint32_t inet = htonl(AF_INET);
     uint32_t total_len = buf->total_len() + sizeof(uint32_t);
@@ -27,7 +27,7 @@ void _pip_netif_output_ip_data_callback (pip_netif * netif, pip_buf * buf) {
     uint8_t * buffer = (uint8_t *)malloc(total_len);
     memcpy(buffer, &inet, sizeof(uint32_t));
     
-    pip_buf * p = buf;
+    auto p = buf;
     int offset = sizeof(uint32_t);
     while (p) {
         memcpy(buffer + offset, p->payload(), p->payload_len());
@@ -43,13 +43,12 @@ void _pip_netif_output_ip_data_callback (pip_netif * netif, pip_buf * buf) {
 }
 
 /// 接受到TCP连接
-void _pip_netif_new_tcp_connect_callback (pip_netif * netif, pip_tcp * tcp, const void * handshake_data, pip_uint16 take_data_len) {
-    
+void _pip_netif_new_tcp_connect_callback (pip_netif & netif, std::shared_ptr<pip_tcp> tcp, const void * handshake_data, pip_uint16 take_data_len) {
     tcp_bridge(tcp, handshake_data, take_data_len);
 }
 
 /// 接受到UDP包
-void _pip_netif_received_udp_data_callback(pip_netif * netif, void * buffer, pip_uint16 buffer_len, const char * src_ip, pip_uint16 src_port, const char * dst_ip, pip_uint16 dst_port, pip_uint8 version) {
+void _pip_netif_received_udp_data_callback(pip_netif & netif, void * buffer, pip_uint16 buffer_len, const char * src_ip, pip_uint16 src_port, const char * dst_ip, pip_uint16 dst_port, pip_uint8 version) {
     
     std::thread thread([=] {
         int fd = socket(AF_INET, SOCK_DGRAM, 0);
@@ -111,10 +110,13 @@ int main(int argc, const char * argv[]) {
      当前只路由 1.1.1.1 到当前 Tun device 并转发到127.0.0.1以测试iperf3
      发起的链接需要根据地址选择对应的interface 比如127.0.0.1对应lo0
      */
-    pip_netif::shared()->output_ip_data_callback = _pip_netif_output_ip_data_callback;
-    pip_netif::shared()->new_tcp_connect_callback = _pip_netif_new_tcp_connect_callback;
-    pip_netif::shared()->received_udp_data_callback = _pip_netif_received_udp_data_callback;
+    
+    
+    pip_netif::shared().output_ip_data_callback = _pip_netif_output_ip_data_callback;
+    pip_netif::shared().new_tcp_connect_callback = _pip_netif_new_tcp_connect_callback;
+    pip_netif::shared().received_udp_data_callback = _pip_netif_received_udp_data_callback;
 
+    
 
     // 创建 tun 虚拟网卡
     tun_sock_fd = open_tun_socket();
@@ -133,9 +135,8 @@ int main(int argc, const char * argv[]) {
 //            family = htonl(family);
 
             // 获取ip包数据写入pip处理
-            pip_netif::shared()->input((const void *)(buffer+4));
+            pip_netif::shared().input((const void *)(buffer+4));
         }
     }
-
     return 0;
 }

@@ -87,7 +87,7 @@ pip_uint16 pip_inet6_checksum(const void * payload, pip_uint8 proto, pip_in6_add
 }
 
 
-pip_uint16 pip_inet_checksum_buf(pip_buf * buf, pip_uint8 proto, pip_in_addr src, pip_in_addr dst) {
+pip_uint16 pip_inet_checksum_buf(std::shared_ptr<pip_buf> buf, pip_uint8 proto, pip_in_addr src, pip_in_addr dst) {
     
     pip_uint32 sum = 0;
     pip_uint32 addr = 0;
@@ -107,7 +107,7 @@ pip_uint16 pip_inet_checksum_buf(pip_buf * buf, pip_uint8 proto, pip_in_addr src
     sum += (len & 0x0000FFFF) >> 0;
     
     
-    for (pip_buf * q = buf; q != nullptr; q = q->next()) {
+    for (auto q = buf; q != nullptr; q = q->next()) {
         sum = pip_standard_checksum(q->payload(), q->payload_len(), sum);
     }
 
@@ -115,7 +115,7 @@ pip_uint16 pip_inet_checksum_buf(pip_buf * buf, pip_uint8 proto, pip_in_addr src
 }
 
 
-pip_uint16 pip_inet6_checksum_buf(pip_buf * buf, pip_uint8 proto, pip_in6_addr src, pip_in6_addr dst) {
+pip_uint16 pip_inet6_checksum_buf(std::shared_ptr<pip_buf> buf, pip_uint8 proto, pip_in6_addr src, pip_in6_addr dst) {
     
     pip_uint32 * _src = (pip_uint32 *)&src;
     pip_uint32 * _dst = (pip_uint32 *)&dst;
@@ -140,7 +140,7 @@ pip_uint16 pip_inet6_checksum_buf(pip_buf * buf, pip_uint8 proto, pip_in6_addr s
     sum += (len & 0xFFFF0000) >> 16;
     sum += (len & 0x0000FFFF) >> 0;
     
-    for (pip_buf * q = buf; q != nullptr; q = q->next()) {
+    for (auto q = buf; q != nullptr; q = q->next()) {
         sum = pip_standard_checksum(q->payload(), q->payload_len(), sum);
     }
     

@@ -13,7 +13,7 @@
 class pip_udp {
     
 public:
-    static void input(const void *bytes, pip_ip_header * ip_header);
+    static void input(const void *bytes, std::shared_ptr<pip_ip_header> ip_header);
     static void output(const void *buffer, pip_uint16 buffer_len, const char * src_ip, pip_uint16 src_port, const char * dst_ip, pip_uint16 dst_port);
 };
 
