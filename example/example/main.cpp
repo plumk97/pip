@@ -50,55 +50,88 @@ void _pip_netif_new_tcp_connect_callback (pip_netif & netif, std::shared_ptr<pip
 /// 接受到UDP包
 void _pip_netif_received_udp_data_callback(pip_netif & netif, void * buffer, pip_uint16 buffer_len, const char * src_ip, pip_uint16 src_port, const char * dst_ip, pip_uint16 dst_port, pip_uint8 version) {
     
-    std::thread thread([=] {
-        int fd = socket(AF_INET, SOCK_DGRAM, 0);
+    static int fd = -1;
+    static std::map<pip_uint32, pip_uint16> udp_ports;
+    
+    if (fd < 0) {
+        fd = socket(AF_INET, SOCK_DGRAM, 0);
         if (fd < 0) return;
         
-        ssize_t ret = 0;
-        
         // - 绑定 interface
-        int index = if_nametoindex("en0");
+        int index = if_nametoindex("lo0");
         if (index == 0) {
             close(fd);
+            fd = -1;
             return;
         }
         
-        ret = setsockopt(fd, IPPROTO_IP, IP_BOUND_IF, &index, sizeof(index));
-        if (ret == -1) {
+        if (setsockopt(fd, IPPROTO_IP, IP_BOUND_IF, &index, sizeof(index)) == -1) {
             close(fd);
+            fd = -1;
             return;
         }
         
-        // - 向远端发起数据
-        struct sockaddr_in servaddr;
-        memset(&servaddr, 0, sizeof(struct sockaddr_in));
-        servaddr.sin_family = AF_INET;
-        servaddr.sin_port = htons(dst_port);
-        servaddr.sin_addr.s_addr = inet_addr(dst_ip);
-        servaddr.sin_len = sizeof(struct sockaddr_in);
         
+        std::thread thread([] {
+            // - 接受数据
+            uint8_t * recv_buffer = (uint8_t *)malloc(65535);
+            struct sockaddr_in addr;
+            socklen_t len = sizeof(sockaddr_in);
+            while (true) {
+                auto ret = recvfrom(fd, (void *)recv_buffer, 65535, 0, (struct sockaddr *)&addr, &len);
+                if (ret <= 0) {
+                    std::cout << strerror(errno) << std::endl;
+                    break;
+                }
+                
         
-        ret = sendto(fd, buffer, buffer_len, 0, (struct sockaddr *)&servaddr, sizeof(sockaddr_in));
-        if (ret <= 0) {
-            close(fd);
-            return;
-        }
+                char * ip = inet_ntoa(addr.sin_addr);
+                
+                // 查找对应的src_port
+                pip_uint32 iden = addr.sin_addr.s_addr ^ addr.sin_port;
+                if (udp_ports.find(iden) == udp_ports.end()) {
+                    continue;
+                }
+                pip_uint16 src_port = udp_ports[iden];
+                
+                // - 将数据输出到pip进行处理 注意地址来源交换
+                if (strcmp(ip, "127.0.0.1") == 0) {
+                    pip_udp::output(recv_buffer, ret, "1.1.1.1", ntohs(addr.sin_port), "192.168.33.1", src_port);
+                } else {
+                    pip_udp::output(recv_buffer, ret, ip, ntohs(addr.sin_port), "192.168.33.1", src_port);
+                }
+            }
+            
         
-        // - 接受数据
-        uint8_t * recv_buffer = (uint8_t *)malloc(65535);
-        ret = recvfrom(fd, (void *)recv_buffer, 65535, 0, nullptr, nullptr);
-        if (ret <= 0) {
             free(recv_buffer);
             close(fd);
-            return;
-        }
-        
-        // - 将数据输出到pip进行处理 注意地址来源交换
-        pip_udp::output(recv_buffer, ret, dst_ip, dst_port, src_ip, src_port);
-        free(recv_buffer);
+            fd = -1;
+        });
+        thread.detach();
+    }
+    
+
+    // - 向远端发起数据
+    struct sockaddr_in addr;
+    memset(&addr, 0, sizeof(struct sockaddr_in));
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(dst_port);
+    if (strcmp(dst_ip, "1.1.1.1") == 0) {
+        addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+    } else {
+        addr.sin_addr.s_addr = inet_addr(dst_ip);
+    }
+    addr.sin_len = sizeof(struct sockaddr_in);
+
+    // 记录src_port
+    udp_ports[addr.sin_addr.s_addr ^ addr.sin_port] = src_port;
+    
+    auto ret = sendto(fd, buffer, buffer_len, 0, (struct sockaddr *)&addr, sizeof(sockaddr_in));
+    if (ret <= 0) {
         close(fd);
-    });
-    thread.detach();
+        fd = -1;
+        return;
+    }
 }
 
 

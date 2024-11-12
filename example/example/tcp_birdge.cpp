@@ -53,6 +53,7 @@ void _pip_tcp_connected_callback(std::shared_ptr<pip_tcp> tcp) {
 void _pip_tcp_closed_callback(std::shared_ptr<pip_tcp> tcp, void *arg) {
     int fd = *((int *)arg);
     close(fd);
+    free(arg);
 }
 
 void tcp_bridge(std::shared_ptr<pip_tcp> tcp, const void * handshake_data, pip_uint16 take_data_len) {
