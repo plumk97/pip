@@ -37,7 +37,6 @@ typedef void (*pip_tcp_written_callback) (std::shared_ptr<pip_tcp> tcp, pip_uint
 
 class pip_tcp : public std::enable_shared_from_this<pip_tcp> {
     
-    
     /// 连接标识
     PIP_READONLY_PROPERTY(pip_uint32, iden);
     
@@ -91,9 +90,7 @@ class pip_tcp : public std::enable_shared_from_this<pip_tcp> {
     
 private:
     
-    ///
-    std::recursive_mutex _mutex;
-    
+    std::mutex _mutex;
     /// 释放资源
     void release();
     
@@ -105,17 +102,8 @@ public:
     pip_tcp_closed_callback closed_callback;
     pip_tcp_received_callback received_callback;
     pip_tcp_written_callback written_callback;
-    
+
 public:
-    std::shared_ptr<std::mutex> get_mutex();
-    
-public:
-    static void input(const void * bytes, std::shared_ptr<pip_ip_header> ip_header);
-    static void timer_tick();
-    
-    /// 获取当前连接数
-    static pip_uint32 current_connections();
-    
     /// 建立连接
     /// @param handshake_data 发起连接时的握手数据
     void connected(const void * handshake_data);
@@ -132,6 +120,9 @@ public:
     /// @param is_copy 是否复制数据
     pip_uint32 write(const void *bytes, pip_uint32 len, bool is_copy);
     
+    /// 当前最大可发送数据量
+    pip_uint32 maximum_write_length();
+    
     /// 接受数据之后调用更新窗口
     /// @param len 接受的数据大小
     void received(pip_uint16 len);
@@ -139,12 +130,14 @@ public:
     /// 输出当前状态
     void debug_status();
     
-    /// 写之前调用该方法判断当前是否能写
-    bool can_write();
-    
 private:
+    void _connected(const void * handshake_data);
+    void _close();
     void _reset();
-    bool _can_write();
+    pip_uint32 _write(const void *bytes, pip_uint32 len, bool is_copy);
+    pip_uint32 _maximum_write_length();
+    void _received(pip_uint16 len);
+    void _timer_tick(pip_uint64 now);
     
 private:
     
@@ -169,6 +162,19 @@ private:
     /// 处理数据接收
     void handle_receive(const void * data, pip_uint16 datalen);
     
+    /// 处理TCP数据包
+    void handle_input(std::shared_ptr<pip_ip_header> ip_header, struct tcphdr *hdr, const void *bytes, pip_uint16 datalen);
+    
+public:
+    
+    /// 处理TCP数据包
+    static void input(const void * bytes, std::shared_ptr<pip_ip_header> ip_header);
+    
+    /// 定时检查
+    static void timer_tick();
+    
+    /// 获取当前连接数
+    static pip_uint32 current_connections();
 };
 
 #endif /* pip_tcp_hpp */

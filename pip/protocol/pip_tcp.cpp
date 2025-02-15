@@ -85,63 +85,72 @@ void pip_tcp::release() {
     this->set_arg(nullptr);
 
     if (this->closed_callback != nullptr) {
+        _mutex.unlock();
         this->closed_callback(shared_from_this(), arg);
+        _mutex.lock();
         this->closed_callback = nullptr;
     }
 }
 
-void pip_tcp::timer_tick() {
-    pip_uint64 cur_time = get_current_time();
-    auto & manager = pip_tcp_manager::shared();
-    if (manager.size() <= 0) {
-        return;
-    }
-    
-    auto tcps = manager.tcps();
-    for (auto iter = tcps.begin(); iter != tcps.end(); ) {
-        
-        auto tcp = iter->second;
-        iter++;
-        
-        std::unique_lock<std::recursive_mutex> lock(tcp->_mutex);
-        if (tcp->status() == pip_tcp_status_released) {
-            manager.remove_tcp(tcp->iden());
-            continue;
-        }
-        
-        if ((tcp->status() == pip_tcp_status_fin_wait_1 || tcp->status() == pip_tcp_status_fin_wait_2 || tcp->status() == pip_tcp_status_close_wait) &&
-            cur_time - tcp->fin_time() >= 20000) {
-            /// 处于等待关闭状态 并且等待时间已经大于20秒 直接关闭
-            tcp->release();
-            continue;
-        }
 
-        if (tcp->packet_queue()->empty()) {
-            continue;
-        }
-        
-        auto packet = tcp->packet_queue()->front();
-        if (cur_time - packet->send_time() < 1000) {
-            continue;
-        }
-        
-        /// 数据超过5次没有确认断开连接
-        if (packet->send_count() > 5) {
-            tcp->reset();
-        } else {
-            tcp->resend_packet(packet);
-        }
-    }
-}
 
 // MARK: - -
-pip_uint32 pip_tcp::current_connections() {
-    return pip_tcp_manager::shared().size();
-}
+
 
 void pip_tcp::connected(const void *handshake_data) {
-    std::lock_guard<std::recursive_mutex> lock(this->_mutex);
-    
+    _mutex.lock();
+    _connected(handshake_data);
+    _mutex.unlock();
+}
+
+void pip_tcp::close() {
+    _mutex.lock();
+    _close();
+    _mutex.unlock();
+}
+
+void pip_tcp::reset() {
+    _mutex.lock();
+    _reset();
+    _mutex.unlock();
+}
+
+
+pip_uint32 pip_tcp::write(const void *bytes, pip_uint32 len, bool is_copy) {
+    _mutex.lock();
+    pip_uint32 written = _write(bytes, len, is_copy);
+    _mutex.unlock();
+    return written;
+}
+
+void pip_tcp::received(pip_uint16 len) {
+    _mutex.lock();
+    _received(len);
+    _mutex.unlock();
+}
+
+void pip_tcp::debug_status() {
+    _mutex.lock();
+    printf("source %s port %d\n", this->ip_header()->src_str(), this->src_port());
+    printf("destination %s port %d\n", this->ip_header()->dst_str(), this->dst_port());
+    printf("wind %hu \n", this->wind());
+    printf("wait ack pkts %zu \n", this->packet_queue()->size());
+    printf("current tcp connections %u \n", pip_tcp_manager::shared().size());
+    printf("\n\n");
+    _mutex.unlock();
+}
+
+
+pip_uint32 pip_tcp::maximum_write_length() {
+    _mutex.lock();
+    pip_uint32 ret = this->_maximum_write_length();
+    _mutex.unlock();
+    return ret;
+}
+
+// MARK: - Private
+
+void pip_tcp::_connected(const void * handshake_data) {
     if (this->status() != pip_tcp_status_wait_establishing) {
         return;
     }
@@ -161,9 +170,7 @@ void pip_tcp::connected(const void *handshake_data) {
     }
 }
 
-void pip_tcp::close() {
-    std::lock_guard<std::recursive_mutex> lock(this->_mutex);
-    
+void pip_tcp::_close() {
     pip_tcp_status status = this->status();
     switch (status) {
         case pip_tcp_status_closed: {
@@ -192,32 +199,8 @@ void pip_tcp::close() {
     }
 }
 
-void pip_tcp::reset() {
-    std::lock_guard<std::recursive_mutex> lock(this->_mutex);
-    this->_reset();
-}
-
-void pip_tcp::_reset() {
-    switch (this->status()) {
-    case pip_tcp_status_wait_establishing:
-    case pip_tcp_status_establishing:
-    case pip_tcp_status_established: {
-        auto packet = std::make_shared<pip_tcp_packet>(shared_from_this(), TH_RST | TH_ACK, nullptr, nullptr);
-        this->send_packet(packet);
-        break;
-    }
-
-    default:
-        break;
-    }
-    
-    this->release();
-}
-
-pip_uint32 pip_tcp::write(const void *bytes, pip_uint32 len, bool is_copy) {
-    std::lock_guard<std::recursive_mutex> lock(this->_mutex);
-    
-    if (this->status() != pip_tcp_status_established || !this->_can_write()) {
+pip_uint32 pip_tcp::_write(const void *bytes, pip_uint32 len, bool is_copy) {
+    if (_maximum_write_length() <= 0) {
         return 0;
     }
     
@@ -264,9 +247,15 @@ pip_uint32 pip_tcp::write(const void *bytes, pip_uint32 len, bool is_copy) {
     return offset;
 }
 
-void pip_tcp::received(pip_uint16 len) {
-    std::lock_guard<std::recursive_mutex> lock(this->_mutex);
+pip_uint32 pip_tcp::_maximum_write_length() {
+    if (_is_wait_push_ack || _status != pip_tcp_status_established) {
+        return 0;
+    }
     
+    return _opp_wind;
+}
+
+void pip_tcp::_received(pip_uint16 len) {
     if (this->status() != pip_tcp_status_established) {
         return;
     }
@@ -279,25 +268,53 @@ void pip_tcp::received(pip_uint16 len) {
     }
 }
 
-void pip_tcp::debug_status() {
-    std::lock_guard<std::recursive_mutex> lock(this->_mutex);
+void pip_tcp::_reset() {
+    switch (this->status()) {
+    case pip_tcp_status_wait_establishing:
+    case pip_tcp_status_establishing:
+    case pip_tcp_status_established: {
+        auto packet = std::make_shared<pip_tcp_packet>(shared_from_this(), TH_RST | TH_ACK, nullptr, nullptr);
+        this->send_packet(packet);
+        break;
+    }
+
+    default:
+        break;
+    }
     
-    printf("source %s port %d\n", this->ip_header()->src_str(), this->src_port());
-    printf("destination %s port %d\n", this->ip_header()->dst_str(), this->dst_port());
-    printf("wind %hu \n", this->wind());
-    printf("wait ack pkts %d \n", this->packet_queue()->size());
-    printf("current tcp connections %u \n", pip_tcp_manager::shared().size());
-    printf("\n\n");
+    this->release();
 }
 
+void pip_tcp::_timer_tick(pip_uint64 now) {
+    auto & manager = pip_tcp_manager::shared();
+    if (this->status() == pip_tcp_status_released) {
+        manager.remove_tcp(this->iden());
+        return;
+    }
+    
+    if ((this->status() == pip_tcp_status_fin_wait_1 || this->status() == pip_tcp_status_fin_wait_2 || this->status() == pip_tcp_status_close_wait) &&
+        now - this->fin_time() >= 20000) {
+        /// 处于等待关闭状态 并且等待时间已经大于20秒 直接关闭
+        this->release();
+        return;
+    }
 
-bool pip_tcp::can_write() {
-    std::lock_guard<std::recursive_mutex> lock(this->_mutex);
-    return this->_can_write();
-}
-
-bool pip_tcp::_can_write() {
-    return this->is_wait_push_ack() == false;
+    if (this->packet_queue()->empty()) {
+        return;
+    }
+    
+    auto packet = this->packet_queue()->front();
+    if (now - packet->send_time() < 1000) {
+        return;
+    }
+    
+    /// 数据超过5次没有确认断开连接
+    if (packet->send_count() > 5) {
+        this->_reset();
+    } else {
+        this->resend_packet(packet);
+    }
+    
 }
 
 // MARK: - Send
@@ -389,13 +406,17 @@ void pip_tcp::handle_ack(pip_uint32 ack, bool is_update_wind) {
     if (has_syn) {
         this->set_status(pip_tcp_status_established);
         if (this->connected_callback) {
+            _mutex.unlock();
             this->connected_callback(shared_from_this());
+            _mutex.lock();
         }
     }
     
     if (written_length > 0 || is_update_wind) {
         if (this->written_callback) {
+            _mutex.unlock();
             this->written_callback(shared_from_this(), written_length, has_push, false);
+            _mutex.lock();
         }
     }
     
@@ -541,7 +562,6 @@ void pip_tcp::handle_fin() {
 
 
 void pip_tcp::handle_receive(const void *data, pip_uint16 datalen) {
-
     
 #if PIP_DEBUG
     printf("[tcp_handle_receive]:\n");
@@ -551,7 +571,71 @@ void pip_tcp::handle_receive(const void *data, pip_uint16 datalen) {
     
     this->set_wind(this->wind() - datalen);
     if (this->received_callback) {
+        _mutex.unlock();
         this->received_callback(shared_from_this(), data, datalen);
+        _mutex.lock();
+    }
+}
+
+/// 处理Input
+void pip_tcp::handle_input(std::shared_ptr<pip_ip_header> ip_header, struct tcphdr *hdr, const void *bytes, pip_uint16 datalen) {
+    if (this->status() == pip_tcp_status_released) {
+        return;
+    }
+    
+    if (hdr->th_flags & TH_RST) {
+        // RST 标志直接释放
+        this->release();
+        return;
+    }
+    
+    if (hdr->th_flags == TH_ACK && ntohl(hdr->th_seq) == this->ack() - 1) {
+        // keep-alive 包 直接回复
+        this->send_ack();
+        return;
+    }
+    
+    if (this->ack() > 0) {
+        if (ntohl(hdr->th_seq) != this->ack()) {
+            /// 当前数据包seq与之前的ack对不上 产生了丢包 回复之前的ack 等待重传
+            this->send_ack();
+            return;
+        }
+    }
+    
+    this->set_opp_seq(ntohl(hdr->th_seq));
+    this->set_ack(increase_seq(ntohl(hdr->th_seq), hdr->th_flags, datalen));
+    
+    bool is_update_wind = false;
+    if (this->opp_wind() <= 0 && this->is_wait_push_ack() == false) {
+        is_update_wind = true;
+    }
+    this->set_opp_wind(pip_uint32(ntohs(hdr->th_win)) << this->opp_wind_shift());
+    
+    if (hdr->th_flags & TH_PUSH || datalen > 0) {
+        this->handle_receive((pip_uint8 *)bytes + hdr->th_off * 4, datalen);
+    }
+    
+    if (hdr->th_flags & TH_ACK) {
+        this->handle_ack(ntohl(hdr->th_ack), is_update_wind);
+    }
+    
+    if (this->status() == pip_tcp_status_released) {
+        /// 在handle_ack里已经释放
+        return;
+    }
+    
+    if (hdr->th_flags & TH_SYN) {
+        this->set_status(pip_tcp_status_wait_establishing);
+        if (pip_netif::shared().new_tcp_connect_callback) {
+            _mutex.unlock();
+            pip_netif::shared().new_tcp_connect_callback(pip_netif::shared(), shared_from_this(), bytes, hdr->th_off * 4);
+            _mutex.lock();
+        }
+    }
+    
+    if (hdr->th_flags & TH_FIN) {
+        this->handle_fin();
     }
 }
 
@@ -608,62 +692,31 @@ void pip_tcp::input(const void * bytes, std::shared_ptr<pip_ip_header> ip_header
 #if PIP_DEBUG
     pip_debug_output_tcp(tcp, hdr, datalen, "tcp_input");
 #endif
-    
-    std::lock_guard<std::recursive_mutex> lock(tcp->_mutex);
-    if (tcp->status() == pip_tcp_status_released) {
+    tcp->_mutex.lock();
+    tcp->handle_input(ip_header, hdr, bytes, datalen);
+    tcp->_mutex.unlock();
+}
+
+
+void pip_tcp::timer_tick() {
+    pip_uint64 cur_time = get_current_time();
+    auto & manager = pip_tcp_manager::shared();
+    if (manager.size() <= 0) {
         return;
     }
     
-    if (hdr->th_flags & TH_RST) {
-        // RST 标志直接释放
-        tcp->release();
-        return;
+    auto tcps = manager.tcps();
+    for (auto iter = tcps.begin(); iter != tcps.end(); ) {
+        
+        auto tcp = iter->second;
+        iter++;
+        
+        tcp->_mutex.lock();
+        tcp->_timer_tick(cur_time);
+        tcp->_mutex.unlock();
     }
-    
-    if (hdr->th_flags == TH_ACK && ntohl(hdr->th_seq) == tcp->ack() - 1) {
-        // keep-alive 包 直接回复
-        tcp->send_ack();
-        return;
-    }
-    
-    if (tcp->ack() > 0) {
-        if (ntohl(hdr->th_seq) != tcp->ack()) {
-            /// 当前数据包seq与之前的ack对不上 产生了丢包 回复之前的ack 等待重传
-            tcp->send_ack();
-            return;
-        }
-    }
-    
-    tcp->set_opp_seq(ntohl(hdr->th_seq));
-    tcp->set_ack(increase_seq(ntohl(hdr->th_seq), hdr->th_flags, datalen));
-    
-    bool is_update_wind = false;
-    if (tcp->opp_wind() <= 0 && tcp->is_wait_push_ack() == false) {
-        is_update_wind = true;
-    }
-    tcp->set_opp_wind(pip_uint32(ntohs(hdr->th_win)) << tcp->opp_wind_shift());
-    
-    if (hdr->th_flags & TH_PUSH || datalen > 0) {
-        tcp->handle_receive((pip_uint8 *)bytes + hdr->th_off * 4, datalen);
-    }
-    
-    if (hdr->th_flags & TH_ACK) {
-        tcp->handle_ack(ntohl(hdr->th_ack), is_update_wind);
-    }
-    
-    if (tcp->status() == pip_tcp_status_released) {
-        /// 在handle_ack里已经释放
-        return;
-    }
-    
-    if (hdr->th_flags & TH_SYN) {
-        tcp->set_status(pip_tcp_status_wait_establishing);
-        if (pip_netif::shared().new_tcp_connect_callback) {
-            pip_netif::shared().new_tcp_connect_callback(pip_netif::shared(), tcp, bytes, hdr->th_off * 4);
-        }
-    }
-    
-    if (hdr->th_flags & TH_FIN) {
-        tcp->handle_fin();
-    }
+}
+
+pip_uint32 pip_tcp::current_connections() {
+    return pip_tcp_manager::shared().size();
 }
