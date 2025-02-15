@@ -13,14 +13,15 @@
 #include <stdlib.h>
 #include <sys/types.h>
 
-#if __APPLE__
+#if defined(__APPLE__) || defined(__ANDROID__)
 #include <arpa/inet.h>
 #include <netinet/ip.h>
 #include <netinet/ip6.h>
 #include <netinet/ip_icmp.h>
 #include <netinet/tcp.h>
 #include <netinet/udp.h>
-#else
+
+#elif defined(_WIN32) || defined(_WIN64)
 
 #include <WinSock2.h>
 #include <ws2tcpip.h>
@@ -71,7 +72,9 @@ static inline pip_uint64 get_current_time() {
 }
 
 
-#ifndef __APPLE__
+
+#if !defined(_NETINET_IP_H) && !defined(_NETINET_IP_H_)
+#define _NETINET_IP_H_
 
 /*
  * Structure of an internet header, naked of options.
@@ -121,6 +124,10 @@ struct ip6_hdr {
     struct in6_addr ip6_dst;        /* destination address */
 };
 
+#endif
+
+#if !defined(_NETINET_TCP_H) && !defined(_NETINET_TCP_H_)
+#define _NETINET_TCP_H_
 /*
  * TCP header.
  * Per RFC 793, September, 1981.
@@ -156,8 +163,11 @@ struct tcphdr {
     pip_uint16  th_sum;         /* checksum */
     pip_uint16  th_urp;         /* urgent pointer */
 };
+#endif
 
 
+#if !defined(_NETINET_UDP_H) && !defined(_NETINET_UDP_H_)
+#define _NETINET_UDP_H_
 /*
  * Udp protocol header.
  * Per RFC 768, September, 1981.
@@ -169,8 +179,8 @@ struct udphdr {
     pip_uint16 uh_sum;                 /* udp checksum */
 };
 
+#endif
 
-#endif // !__APPLE__
 
 
 
