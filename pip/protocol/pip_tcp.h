@@ -12,6 +12,9 @@
 #include <functional>
 #include <queue>
 
+#include "pip_tcp_event.h"
+#include "pip_tcp_packet.h"
+
 #include "../pip_type.h"
 #include "../pip_buf.h"
 #include "../pip_ip_header.h"
@@ -91,6 +94,10 @@ class pip_tcp : public std::enable_shared_from_this<pip_tcp> {
 private:
     
     std::mutex _mutex;
+    
+    ///
+    std::vector<pip_tcp_event_variant> _events;
+    
     /// 释放资源
     void release();
     
@@ -140,6 +147,8 @@ private:
     void _timer_tick(pip_uint64 now);
     
 private:
+    /// 处理事件
+    void process_events();
     
     /// 发送数据包
     void send_packet(std::shared_ptr<pip_tcp_packet> packet);

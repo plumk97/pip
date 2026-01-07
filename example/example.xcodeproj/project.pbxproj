@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		5104E9A22F0EE52C00008619 /* pip_tcp_event.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5104E9A12F0EE52C00008619 /* pip_tcp_event.cpp */; };
 		5122995C29CE8E1D00FFFF54 /* hex.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5122995A29CE8E1D00FFFF54 /* hex.cpp */; };
 		5122995F29CEA2F900FFFF54 /* tun.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5122995D29CEA2F900FFFF54 /* tun.cpp */; };
 		51335C2C2CA1DB29009EA7B3 /* pip_buf.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 51335C2A2CA1DB29009EA7B3 /* pip_buf.cpp */; };
@@ -35,6 +36,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		5104E9A02F0EE52C00008619 /* pip_tcp_event.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = pip_tcp_event.h; sourceTree = "<group>"; };
+		5104E9A12F0EE52C00008619 /* pip_tcp_event.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = pip_tcp_event.cpp; sourceTree = "<group>"; };
 		5122995A29CE8E1D00FFFF54 /* hex.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = hex.cpp; sourceTree = "<group>"; };
 		5122995B29CE8E1D00FFFF54 /* hex.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = hex.hpp; sourceTree = "<group>"; };
 		5122995D29CEA2F900FFFF54 /* tun.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = tun.cpp; sourceTree = "<group>"; };
@@ -105,15 +108,17 @@
 		51776DD52A1662E400EB6C14 /* protocol */ = {
 			isa = PBXGroup;
 			children = (
-				51776DDA2A1662E400EB6C14 /* pip_icmp.cpp */,
 				51776DD62A1662E400EB6C14 /* pip_icmp.h */,
-				5160F1AA2A1B147600BE4D5A /* pip_tcp_manager.h */,
-				5160F1A82A1B147600BE4D5A /* pip_tcp_packet.cpp */,
-				5160F1A92A1B147600BE4D5A /* pip_tcp_packet.h */,
-				51776DDB2A1662E400EB6C14 /* pip_tcp.cpp */,
+				51776DDA2A1662E400EB6C14 /* pip_icmp.cpp */,
 				51776DD82A1662E400EB6C14 /* pip_tcp.h */,
-				51776DD92A1662E400EB6C14 /* pip_udp.cpp */,
+				51776DDB2A1662E400EB6C14 /* pip_tcp.cpp */,
+				5104E9A02F0EE52C00008619 /* pip_tcp_event.h */,
+				5104E9A12F0EE52C00008619 /* pip_tcp_event.cpp */,
+				5160F1AA2A1B147600BE4D5A /* pip_tcp_manager.h */,
+				5160F1A92A1B147600BE4D5A /* pip_tcp_packet.h */,
+				5160F1A82A1B147600BE4D5A /* pip_tcp_packet.cpp */,
 				51776DD72A1662E400EB6C14 /* pip_udp.h */,
+				51776DD92A1662E400EB6C14 /* pip_udp.cpp */,
 			);
 			path = protocol;
 			sourceTree = "<group>";
@@ -217,6 +222,7 @@
 				51776DE62A1662E400EB6C14 /* pip_icmp.cpp in Sources */,
 				51776DE72A1662E400EB6C14 /* pip_tcp.cpp in Sources */,
 				5122995C29CE8E1D00FFFF54 /* hex.cpp in Sources */,
+				5104E9A22F0EE52C00008619 /* pip_tcp_event.cpp in Sources */,
 				51776DE52A1662E400EB6C14 /* pip_udp.cpp in Sources */,
 				51335C2C2CA1DB29009EA7B3 /* pip_buf.cpp in Sources */,
 				51776DE42A1662E400EB6C14 /* pip_ip_header.cpp in Sources */,

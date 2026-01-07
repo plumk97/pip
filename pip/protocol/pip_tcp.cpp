@@ -67,7 +67,6 @@ void pip_tcp::release() {
         return;
     }
     this->set_status(pip_tcp_status_released);
-    
 
     if (this->connected_callback != nullptr) {
         this->connected_callback = nullptr;
@@ -81,15 +80,8 @@ void pip_tcp::release() {
         this->written_callback = nullptr;
     }
     
-    void* arg = this->arg();
+    this->_events.push_back(pip_tcp_closed_event(this->arg()));
     this->set_arg(nullptr);
-
-    if (this->closed_callback != nullptr) {
-        _mutex.unlock();
-        this->closed_callback(shared_from_this(), arg);
-        _mutex.lock();
-        this->closed_callback = nullptr;
-    }
 }
 
 
@@ -107,12 +99,14 @@ void pip_tcp::close() {
     _mutex.lock();
     _close();
     _mutex.unlock();
+    this->process_events();
 }
 
 void pip_tcp::reset() {
     _mutex.lock();
     _reset();
     _mutex.unlock();
+    this->process_events();
 }
 
 
@@ -405,19 +399,11 @@ void pip_tcp::handle_ack(pip_uint32 ack, bool is_update_wind) {
     
     if (has_syn) {
         this->set_status(pip_tcp_status_established);
-        if (this->connected_callback) {
-            _mutex.unlock();
-            this->connected_callback(shared_from_this());
-            _mutex.lock();
-        }
+        this->_events.push_back(pip_tcp_connected_event());
     }
     
     if (written_length > 0 || is_update_wind) {
-        if (this->written_callback) {
-            _mutex.unlock();
-            this->written_callback(shared_from_this(), written_length, has_push, false);
-            _mutex.lock();
-        }
+        this->_events.push_back(pip_tcp_written_event(written_length, has_push, false));
     }
     
     if (has_fin) {
@@ -570,11 +556,7 @@ void pip_tcp::handle_receive(const void *data, pip_uint16 datalen) {
 #endif
     
     this->set_wind(this->wind() - datalen);
-    if (this->received_callback) {
-        _mutex.unlock();
-        this->received_callback(shared_from_this(), data, datalen);
-        _mutex.lock();
-    }
+    this->_events.push_back(pip_tcp_received_event(data, datalen));
 }
 
 /// 处理Input
@@ -627,11 +609,7 @@ void pip_tcp::handle_input(std::shared_ptr<pip_ip_header> ip_header, struct tcph
     
     if (hdr->th_flags & TH_SYN) {
         this->set_status(pip_tcp_status_wait_establishing);
-        if (pip_netif::shared().new_tcp_connect_callback) {
-            _mutex.unlock();
-            pip_netif::shared().new_tcp_connect_callback(pip_netif::shared(), shared_from_this(), bytes, hdr->th_off * 4);
-            _mutex.lock();
-        }
+        this->_events.push_back(pip_tcp_connect_event(bytes, hdr->th_off * 4));
     }
     
     if (hdr->th_flags & TH_FIN) {
@@ -695,6 +673,7 @@ void pip_tcp::input(const void * bytes, std::shared_ptr<pip_ip_header> ip_header
     tcp->_mutex.lock();
     tcp->handle_input(ip_header, hdr, bytes, datalen);
     tcp->_mutex.unlock();
+    tcp->process_events();
 }
 
 
