@@ -71,7 +71,7 @@ public:
     pip_netif_received_icmp_data_callback received_icmp_data_callback;
     
 private:
-    pip_uint16 _identifer = 0;
+    std::atomic<pip_uint16> _identifer;
 };
 
 

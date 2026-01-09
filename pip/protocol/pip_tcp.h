@@ -38,6 +38,11 @@ typedef void (*pip_tcp_received_callback) (std::shared_ptr<pip_tcp> tcp, const v
 /// @param is_drop 该包是否已经丢弃
 typedef void (*pip_tcp_written_callback) (std::shared_ptr<pip_tcp> tcp, pip_uint32 writeen_len, bool has_push, bool is_drop);
 
+
+bool is_before_seq(pip_uint32 seq, pip_uint32 ack);
+pip_uint32 increase_seq(pip_uint32 seq, pip_uint8 flags, pip_uint32 datalen);
+
+
 class pip_tcp : public std::enable_shared_from_this<pip_tcp> {
     
     /// 连接标识
@@ -133,9 +138,6 @@ public:
     /// 接受数据之后调用更新窗口
     /// @param len 接受的数据大小
     void received(pip_uint16 len);
-    
-    /// 输出当前状态
-    void debug_status();
     
 private:
     void _connected(const void * handshake_data);

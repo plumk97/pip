@@ -49,7 +49,7 @@ typedef struct in_addr pip_in_addr;
 typedef struct in6_addr pip_in6_addr;
 
 typedef enum : pip_uint8 {
-    pip_tcp_status_closed,
+    pip_tcp_status_none,
     /* received SYN wait response */
     pip_tcp_status_wait_establishing,
     pip_tcp_status_establishing,

@@ -7,6 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		3B8553B42F1109690084F166 /* pip_tcp_check.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3B8553B32F1109690084F166 /* pip_tcp_check.cpp */; };
+		3B8553B62F1109D00084F166 /* pip_tcp_private.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3B8553B52F1109D00084F166 /* pip_tcp_private.cpp */; };
+		3B8553B82F110A370084F166 /* pip_tcp_input.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3B8553B72F110A370084F166 /* pip_tcp_input.cpp */; };
+		3B8553BA2F110ABE0084F166 /* pip_tcp_public.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3B8553B92F110ABE0084F166 /* pip_tcp_public.cpp */; };
 		5104E9A22F0EE52C00008619 /* pip_tcp_event.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5104E9A12F0EE52C00008619 /* pip_tcp_event.cpp */; };
 		5122995C29CE8E1D00FFFF54 /* hex.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5122995A29CE8E1D00FFFF54 /* hex.cpp */; };
 		5122995F29CEA2F900FFFF54 /* tun.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5122995D29CEA2F900FFFF54 /* tun.cpp */; };
@@ -36,6 +40,10 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		3B8553B32F1109690084F166 /* pip_tcp_check.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = pip_tcp_check.cpp; sourceTree = "<group>"; };
+		3B8553B52F1109D00084F166 /* pip_tcp_private.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = pip_tcp_private.cpp; sourceTree = "<group>"; };
+		3B8553B72F110A370084F166 /* pip_tcp_input.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = pip_tcp_input.cpp; sourceTree = "<group>"; };
+		3B8553B92F110ABE0084F166 /* pip_tcp_public.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = pip_tcp_public.cpp; sourceTree = "<group>"; };
 		5104E9A02F0EE52C00008619 /* pip_tcp_event.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = pip_tcp_event.h; sourceTree = "<group>"; };
 		5104E9A12F0EE52C00008619 /* pip_tcp_event.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = pip_tcp_event.cpp; sourceTree = "<group>"; };
 		5122995A29CE8E1D00FFFF54 /* hex.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = hex.cpp; sourceTree = "<group>"; };
@@ -112,11 +120,15 @@
 				51776DDA2A1662E400EB6C14 /* pip_icmp.cpp */,
 				51776DD82A1662E400EB6C14 /* pip_tcp.h */,
 				51776DDB2A1662E400EB6C14 /* pip_tcp.cpp */,
+				3B8553B32F1109690084F166 /* pip_tcp_check.cpp */,
 				5104E9A02F0EE52C00008619 /* pip_tcp_event.h */,
 				5104E9A12F0EE52C00008619 /* pip_tcp_event.cpp */,
+				3B8553B72F110A370084F166 /* pip_tcp_input.cpp */,
 				5160F1AA2A1B147600BE4D5A /* pip_tcp_manager.h */,
 				5160F1A92A1B147600BE4D5A /* pip_tcp_packet.h */,
 				5160F1A82A1B147600BE4D5A /* pip_tcp_packet.cpp */,
+				3B8553B52F1109D00084F166 /* pip_tcp_private.cpp */,
+				3B8553B92F110ABE0084F166 /* pip_tcp_public.cpp */,
 				51776DD72A1662E400EB6C14 /* pip_udp.h */,
 				51776DD92A1662E400EB6C14 /* pip_udp.cpp */,
 			);
@@ -213,6 +225,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				51776DE92A1662E400EB6C14 /* pip_netif.cpp in Sources */,
+				3B8553B82F110A370084F166 /* pip_tcp_input.cpp in Sources */,
 				51335C2F2CA1E047009EA7B3 /* pip_debug.cpp in Sources */,
 				5160F1AB2A1B147600BE4D5A /* pip_tcp_packet.cpp in Sources */,
 				518829C42A22183900B3DE02 /* main.cpp in Sources */,
@@ -223,8 +236,11 @@
 				51776DE72A1662E400EB6C14 /* pip_tcp.cpp in Sources */,
 				5122995C29CE8E1D00FFFF54 /* hex.cpp in Sources */,
 				5104E9A22F0EE52C00008619 /* pip_tcp_event.cpp in Sources */,
+				3B8553BA2F110ABE0084F166 /* pip_tcp_public.cpp in Sources */,
 				51776DE52A1662E400EB6C14 /* pip_udp.cpp in Sources */,
 				51335C2C2CA1DB29009EA7B3 /* pip_buf.cpp in Sources */,
+				3B8553B62F1109D00084F166 /* pip_tcp_private.cpp in Sources */,
+				3B8553B42F1109690084F166 /* pip_tcp_check.cpp in Sources */,
 				51776DE42A1662E400EB6C14 /* pip_ip_header.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
