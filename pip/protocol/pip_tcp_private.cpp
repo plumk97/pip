@@ -185,13 +185,16 @@ void pip_tcp::handle_ack(pip_uint32 ack, bool is_update_wind) {
     while (!this->packet_queue()->empty()) {
         auto pkt = this->packet_queue()->front();
         struct tcphdr * hdr = pkt->hdr();
-        
-        pip_uint32 seq = ntohl(hdr->th_seq) + pkt->payload_len();
-        
-        if (hdr == nullptr || is_before_seq(seq, ack) == false) {
+
+        if (hdr == nullptr) {
+            break;
+        }
+
+        pip_uint32 seq = increase_seq(ntohl(hdr->th_seq), hdr->th_flags, pkt->payload_len());
+
+        if (is_before_seq(seq, ack) == false) {
 #if PIP_DEBUG
-            if (hdr)
-                printf("break seq: %d ack: %d\n", ntohl(hdr->th_seq), ack);
+            printf("break seq: %d ack: %d\n", ntohl(hdr->th_seq), ack);
 #endif
             break;
         }
@@ -261,12 +264,27 @@ void pip_tcp::handle_syn(const void * options, pip_uint16 optionlen) {
 #if PIP_DEBUG
             printf("kind: %d\n", kind);
 #endif
-            if (kind == 0 || kind == 1) {
+            if (kind == 0) {
+                break;
+            }
+
+            if (kind == 1) {
                 continue;
+            }
+
+            if (offset >= optionlen) {
+                break;
             }
             
             pip_uint8 len = bytes[offset];
+            if (len < 2) {
+                break;
+            }
             offset += 1;
+
+            if (offset + (len - 2) > optionlen) {
+                break;
+            }
             
             pip_uint8 value_len = 0;
             if (len > 2) {
@@ -279,8 +297,10 @@ void pip_tcp::handle_syn(const void * options, pip_uint16 optionlen) {
                 case 2: {
                     // mss
                     pip_uint16 mss = 0;
-                    memcpy(&mss, bytes + offset, value_len);
-                    this->set_opp_mss(ntohs(mss));
+                    if (value_len >= sizeof(pip_uint16)) {
+                        memcpy(&mss, bytes + offset, sizeof(pip_uint16));
+                        this->set_opp_mss(ntohs(mss));
+                    }
 #if PIP_DEBUG
                     printf("mss: %d\n", ntohs(mss));
 #endif
@@ -289,8 +309,10 @@ void pip_tcp::handle_syn(const void * options, pip_uint16 optionlen) {
                     
                 case 3: {
                     pip_uint8 shift = 0;
-                    memcpy(&shift, bytes + offset, value_len);
-                    this->set_opp_wind_shift(shift);
+                    if (value_len >= sizeof(pip_uint8)) {
+                        memcpy(&shift, bytes + offset, sizeof(pip_uint8));
+                        this->set_opp_wind_shift(shift);
+                    }
                     break;
                 }
                     

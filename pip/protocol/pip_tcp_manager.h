@@ -11,6 +11,7 @@
 #include <map>
 #include <shared_mutex>
 #include <functional>
+#include <vector>
 
 #include "../pip_type.h"
 
@@ -56,9 +57,14 @@ public:
         return (pip_uint32)this->_tcps.size();
     }
     
-    const std::map<pip_uint32, std::shared_ptr<pip_tcp>> & tcps() {
+    std::vector<std::shared_ptr<pip_tcp>> tcp_snapshot() {
         std::lock_guard<std::mutex> guard(_lock);
-        return _tcps;
+        std::vector<std::shared_ptr<pip_tcp>> snapshot;
+        snapshot.reserve(_tcps.size());
+        for (auto & kv : _tcps) {
+            snapshot.push_back(kv.second);
+        }
+        return snapshot;
     }
 };
 

@@ -10,14 +10,25 @@
 #define pip_tcp_event_h
 
 #include "../pip_type.h"
+#include <vector>
 
 class pip_tcp_connect_event {
 public:
-    const void * handshake_data;
-    pip_uint16 handshake_data_len;
+    std::vector<pip_uint8> handshake_data;
+
     pip_tcp_connect_event(const void * handshake_data, pip_uint16 handshake_data_len) {
-        this->handshake_data = handshake_data;
-        this->handshake_data_len = handshake_data_len;
+        if (handshake_data != nullptr && handshake_data_len > 0) {
+            const pip_uint8 * ptr = (const pip_uint8 *)handshake_data;
+            this->handshake_data.assign(ptr, ptr + handshake_data_len);
+        }
+    }
+
+    const void * buffer() const {
+        return this->handshake_data.empty() ? nullptr : this->handshake_data.data();
+    }
+
+    pip_uint16 buffer_len() const {
+        return (pip_uint16)this->handshake_data.size();
     }
 };
 
@@ -51,12 +62,21 @@ public:
 class pip_tcp_received_event {
     
 public:
-    const void * buffer;
-    pip_uint32 buffer_len;
+    std::vector<pip_uint8> data;
     
     pip_tcp_received_event(const void *buffer, pip_uint32 buffer_len) {
-        this->buffer = buffer;
-        this->buffer_len = buffer_len;
+        if (buffer != nullptr && buffer_len > 0) {
+            const pip_uint8 * ptr = (const pip_uint8 *)buffer;
+            this->data.assign(ptr, ptr + buffer_len);
+        }
+    }
+
+    const void * buffer() const {
+        return this->data.empty() ? nullptr : this->data.data();
+    }
+
+    pip_uint32 buffer_len() const {
+        return (pip_uint32)this->data.size();
     }
 };
 

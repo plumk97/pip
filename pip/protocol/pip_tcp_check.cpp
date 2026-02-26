@@ -48,11 +48,8 @@ void pip_tcp::timer_tick() {
         return;
     }
     
-    auto tcps = manager.tcps();
-    for (auto iter = tcps.begin(); iter != tcps.end(); ) {
-        
-        auto tcp = iter->second;
-        iter++;
+    auto tcps = manager.tcp_snapshot();
+    for (auto & tcp : tcps) {
         
         tcp->_mutex.lock();
         tcp->_timer_tick(cur_time);

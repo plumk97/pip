@@ -11,8 +11,14 @@
 
 void pip_tcp::input(const void * bytes, std::shared_ptr<pip_ip_header> ip_header) {
     struct tcphdr *hdr = (struct tcphdr *)bytes;
-    
-    pip_uint16 datalen = ip_header->datalen() - hdr->th_off * 4;
+
+    pip_uint16 ip_datalen = ip_header->datalen();
+    pip_uint16 tcp_header_len = hdr->th_off * 4;
+    if (ip_datalen < sizeof(struct tcphdr) || hdr->th_off < 5 || tcp_header_len > ip_datalen) {
+        return;
+    }
+
+    pip_uint16 datalen = ip_datalen - tcp_header_len;
     pip_uint16 dport = ntohs(hdr->th_dport);
     pip_uint16 sport = ntohs(hdr->th_sport);
     

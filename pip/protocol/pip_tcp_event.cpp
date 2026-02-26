@@ -26,7 +26,7 @@ void pip_tcp::process_events() {
             if constexpr (std::is_same_v<T, pip_tcp_connect_event>) {
                 pip_netif & netif = pip_netif::shared();
                 if (netif.new_tcp_connect_callback != nullptr) {
-                    netif.new_tcp_connect_callback(netif, shared_from_this(), ev.handshake_data, ev.handshake_data_len);
+                    netif.new_tcp_connect_callback(netif, shared_from_this(), ev.buffer(), ev.buffer_len());
                 }
             } else if constexpr (std::is_same_v<T, pip_tcp_connected_event>) {
                 if (this->connected_callback != nullptr) {
@@ -44,7 +44,7 @@ void pip_tcp::process_events() {
                 }
             } else if constexpr (std::is_same_v<T, pip_tcp_received_event>) {
                 if (this->received_callback != nullptr) {
-                    this->received_callback(shared_from_this(), ev.buffer, ev.buffer_len);
+                    this->received_callback(shared_from_this(), ev.buffer(), ev.buffer_len());
                 }
             }
         }, e);
