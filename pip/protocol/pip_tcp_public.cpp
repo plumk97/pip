@@ -1,6 +1,5 @@
 //
 //  pip_tcp_public.cpp
-//  example
 //
 //  Created by Plumk on 2026/1/9.
 //  Copyright © 2026 Plumk. All rights reserved.
@@ -18,6 +17,11 @@ void pip_tcp::connected(const void *handshake_data) {
 
 void pip_tcp::close() {
     _mutex.lock();
+    _arg = nullptr;
+    _connected_callback = nullptr;
+    _closed_callback = nullptr;
+    _received_callback = nullptr;
+    _written_callback = nullptr;
     _close();
     _mutex.unlock();
     this->process_events();
@@ -25,6 +29,11 @@ void pip_tcp::close() {
 
 void pip_tcp::reset() {
     _mutex.lock();
+    _arg = nullptr;
+    _connected_callback = nullptr;
+    _closed_callback = nullptr;
+    _received_callback = nullptr;
+    _written_callback = nullptr;
     _reset();
     _mutex.unlock();
     this->process_events();

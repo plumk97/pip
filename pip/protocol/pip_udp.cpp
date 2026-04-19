@@ -5,7 +5,6 @@
 //
 
 #include "pip_udp.h"
-#include "../pip_debug.h"
 #include "../pip_netif.h"
 #include "../pip_checksum.h"
 
@@ -23,10 +22,6 @@ void pip_udp::input(const void *bytes, std::shared_ptr<pip_ip_header> ip_header)
     if (netif.received_udp_data_callback) {
         netif.received_udp_data_callback(netif, data, datalen, ip_header->src_str(), src_port, ip_header->dst_str(), dst_port, ip_header->version());
     }
-    
-#if PIP_DEBUG
-    pip_debug_output_udp(hdr, "udp_input");
-#endif
     
 }
 

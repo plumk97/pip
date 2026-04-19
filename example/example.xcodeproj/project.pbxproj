@@ -14,8 +14,6 @@
 		5104E9A22F0EE52C00008619 /* pip_tcp_event.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5104E9A12F0EE52C00008619 /* pip_tcp_event.cpp */; };
 		5122995C29CE8E1D00FFFF54 /* hex.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5122995A29CE8E1D00FFFF54 /* hex.cpp */; };
 		5122995F29CEA2F900FFFF54 /* tun.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5122995D29CEA2F900FFFF54 /* tun.cpp */; };
-		51335C2C2CA1DB29009EA7B3 /* pip_buf.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 51335C2A2CA1DB29009EA7B3 /* pip_buf.cpp */; };
-		51335C2F2CA1E047009EA7B3 /* pip_debug.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 51335C2E2CA1E047009EA7B3 /* pip_debug.cpp */; };
 		5160F1AB2A1B147600BE4D5A /* pip_tcp_packet.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5160F1A82A1B147600BE4D5A /* pip_tcp_packet.cpp */; };
 		5168ED512A231C0800D2CB96 /* tcp_birdge.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5168ED502A231C0800D2CB96 /* tcp_birdge.cpp */; };
 		51776DE32A1662E400EB6C14 /* pip_checksum.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 51776DCE2A1662E400EB6C14 /* pip_checksum.cpp */; };
@@ -50,11 +48,7 @@
 		5122995B29CE8E1D00FFFF54 /* hex.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = hex.hpp; sourceTree = "<group>"; };
 		5122995D29CEA2F900FFFF54 /* tun.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = tun.cpp; sourceTree = "<group>"; };
 		5122995E29CEA2F900FFFF54 /* tun.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = tun.hpp; sourceTree = "<group>"; };
-		51335C2A2CA1DB29009EA7B3 /* pip_buf.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = pip_buf.cpp; sourceTree = "<group>"; };
 		51335C2B2CA1DB29009EA7B3 /* pip_buf.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = pip_buf.h; sourceTree = "<group>"; };
-		51335C2D2CA1E047009EA7B3 /* pip_debug.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = pip_debug.h; sourceTree = "<group>"; };
-		51335C2E2CA1E047009EA7B3 /* pip_debug.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = pip_debug.cpp; sourceTree = "<group>"; };
-		5160F1A72A1B142B00BE4D5A /* pip_macro.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = pip_macro.h; sourceTree = "<group>"; };
 		5160F1A82A1B147600BE4D5A /* pip_tcp_packet.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = pip_tcp_packet.cpp; sourceTree = "<group>"; };
 		5160F1A92A1B147600BE4D5A /* pip_tcp_packet.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pip_tcp_packet.h; sourceTree = "<group>"; };
 		5160F1AA2A1B147600BE4D5A /* pip_tcp_manager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pip_tcp_manager.h; sourceTree = "<group>"; };
@@ -95,14 +89,10 @@
 			children = (
 				51776DD42A1662E400EB6C14 /* pip.h */,
 				51335C2B2CA1DB29009EA7B3 /* pip_buf.h */,
-				51335C2A2CA1DB29009EA7B3 /* pip_buf.cpp */,
 				51776DD22A1662E400EB6C14 /* pip_checksum.h */,
 				51776DCE2A1662E400EB6C14 /* pip_checksum.cpp */,
-				51335C2D2CA1E047009EA7B3 /* pip_debug.h */,
-				51335C2E2CA1E047009EA7B3 /* pip_debug.cpp */,
 				51776DE02A1662E400EB6C14 /* pip_ip_header.h */,
 				51776DD32A1662E400EB6C14 /* pip_ip_header.cpp */,
-				5160F1A72A1B142B00BE4D5A /* pip_macro.h */,
 				51776DDC2A1662E400EB6C14 /* pip_netif.h */,
 				51776DDF2A1662E400EB6C14 /* pip_netif.cpp */,
 				51776DCF2A1662E400EB6C14 /* pip_opt.h */,
@@ -226,7 +216,6 @@
 			files = (
 				51776DE92A1662E400EB6C14 /* pip_netif.cpp in Sources */,
 				3B8553B82F110A370084F166 /* pip_tcp_input.cpp in Sources */,
-				51335C2F2CA1E047009EA7B3 /* pip_debug.cpp in Sources */,
 				5160F1AB2A1B147600BE4D5A /* pip_tcp_packet.cpp in Sources */,
 				518829C42A22183900B3DE02 /* main.cpp in Sources */,
 				51776DE32A1662E400EB6C14 /* pip_checksum.cpp in Sources */,
@@ -238,7 +227,6 @@
 				5104E9A22F0EE52C00008619 /* pip_tcp_event.cpp in Sources */,
 				3B8553BA2F110ABE0084F166 /* pip_tcp_public.cpp in Sources */,
 				51776DE52A1662E400EB6C14 /* pip_udp.cpp in Sources */,
-				51335C2C2CA1DB29009EA7B3 /* pip_buf.cpp in Sources */,
 				3B8553B62F1109D00084F166 /* pip_tcp_private.cpp in Sources */,
 				3B8553B42F1109690084F166 /* pip_tcp_check.cpp in Sources */,
 				51776DE42A1662E400EB6C14 /* pip_ip_header.cpp in Sources */,

@@ -5,7 +5,6 @@
 //
 
 #include "pip_ip_header.h"
-#include "pip_debug.h"
 
 pip_ip_header::pip_ip_header(const void* bytes) {
 

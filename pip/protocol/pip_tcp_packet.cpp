@@ -10,8 +10,16 @@
 
 #include "../pip_checksum.h"
 
-pip_tcp_packet::
-pip_tcp_packet(std::shared_ptr<pip_tcp> tcp, pip_uint8 flags, std::shared_ptr<pip_buf> option_buf, std::shared_ptr<pip_buf> payload_buf) {
+
+pip_tcp_packet::pip_tcp_packet(std::shared_ptr<pip_ip_header> ip_header,
+                               pip_uint16 src_port,
+                               pip_uint16 dst_port,
+                               pip_uint32 seq,
+                               pip_uint32 ack,
+                               pip_uint32 wind,
+                               pip_uint8 flags,
+                               std::shared_ptr<pip_buf> option_buf,
+                               std::shared_ptr<pip_buf> payload_buf) {
     
     this->_send_time = 0;
     this->_send_count = 0;
@@ -43,8 +51,8 @@ pip_tcp_packet(std::shared_ptr<pip_tcp> tcp, pip_uint8 flags, std::shared_ptr<pi
     if (true) {
         // 源端口
         pip_uint8 len = sizeof(pip_uint16);
-        pip_uint16 port = htons(tcp->dst_port());
-        memcpy(buffer + offset, &port, len);
+        pip_uint16 hport = htons(src_port);
+        memcpy(buffer + offset, &hport, len);
         
         offset += len;
     }
@@ -52,8 +60,8 @@ pip_tcp_packet(std::shared_ptr<pip_tcp> tcp, pip_uint8 flags, std::shared_ptr<pi
     if (true) {
         // 目标端口
         pip_uint8 len = sizeof(pip_uint16);
-        pip_uint16 port = htons(tcp->src_port());
-        memcpy(buffer + offset, &port, len);
+        pip_uint16 hport = htons(dst_port);
+        memcpy(buffer + offset, &hport, len);
         
         offset += len;
     }
@@ -61,8 +69,8 @@ pip_tcp_packet(std::shared_ptr<pip_tcp> tcp, pip_uint8 flags, std::shared_ptr<pi
     if (true) {
         // 序号
         pip_uint8 len = sizeof(pip_uint32);
-        pip_uint32 seq = htonl(tcp->seq());
-        memcpy(buffer + offset, &seq, len);
+        pip_uint32 hseq = htonl(seq);
+        memcpy(buffer + offset, &hseq, len);
         
         offset += len;
     }
@@ -70,8 +78,8 @@ pip_tcp_packet(std::shared_ptr<pip_tcp> tcp, pip_uint8 flags, std::shared_ptr<pi
     if (true) {
         // 确认号
         pip_uint8 len = sizeof(pip_uint32);
-        pip_uint32 ack = htonl(tcp->ack());
-        memcpy(buffer + offset, &ack, len);
+        pip_uint32 hack = htonl(ack);
+        memcpy(buffer + offset, &hack, len);
         
         offset += len;
     }
@@ -99,8 +107,8 @@ pip_tcp_packet(std::shared_ptr<pip_tcp> tcp, pip_uint8 flags, std::shared_ptr<pi
     if (true) {
         // 窗口大小
         pip_uint8 len = sizeof(pip_uint16);
-        pip_uint16 wind = htons(tcp->wind());
-        memcpy(buffer + offset, &wind, len);
+        pip_uint16 hwind = htons(wind);
+        memcpy(buffer + offset, &hwind, len);
         
         offset += len;
     }
@@ -116,10 +124,10 @@ pip_tcp_packet(std::shared_ptr<pip_tcp> tcp, pip_uint8 flags, std::shared_ptr<pi
     if (true) {
         // 计算校验和
         pip_uint16 checksum = 0;
-        if (tcp->ip_header()->version() == 4) {
-            checksum = pip_inet_checksum_buf(head_buf, IPPROTO_TCP, tcp->ip_header()->ip_dst(), tcp->ip_header()->ip_src());
+        if (ip_header->version() == 4) {
+            checksum = pip_inet_checksum_buf(head_buf, IPPROTO_TCP, ip_header->ip_dst(), ip_header->ip_src());
         } else {
-            checksum = pip_inet6_checksum_buf(head_buf, IPPROTO_TCP, tcp->ip_header()->ip6_dst(), tcp->ip_header()->ip6_src());
+            checksum = pip_inet6_checksum_buf(head_buf, IPPROTO_TCP, ip_header->ip6_dst(), ip_header->ip6_src());
         }
         checksum = htons(checksum);
         memcpy(buffer + checksum_offset, &checksum, sizeof(pip_uint16));

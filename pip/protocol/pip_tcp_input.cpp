@@ -1,6 +1,5 @@
 //
 //  pip_tcp_input.cpp
-//  example
 //
 //  Created by Plumk on 2026/1/9.
 //  Copyright © 2026 Plumk. All rights reserved.
@@ -35,17 +34,17 @@ void pip_tcp::input(const void * bytes, std::shared_ptr<pip_ip_header> ip_header
             
             // 不存在的连接 直接返回RST
             tcp = std::make_shared<pip_tcp>();
-            tcp->set_iden(iden);
-            tcp->set_seq(iden);
-            tcp->set_ip_header(ip_header);
+            tcp->_iden = iden;
+            tcp->_seq = iden;
+            tcp->_ip_header = ip_header;
             
-            tcp->set_src_port(ntohs(hdr->th_sport));
-            tcp->set_dst_port(dport);
+            tcp->_src_port = ntohs(hdr->th_sport);
+            tcp->_dst_port = dport;
             
-            tcp->set_seq(ntohl(hdr->th_ack));
-            tcp->set_ack(increase_seq(ntohl(hdr->th_seq), hdr->th_flags, datalen));
+            tcp->_seq = ntohl(hdr->th_ack);
+            tcp->_ack = increase_seq(ntohl(hdr->th_seq), hdr->th_flags, datalen);
             
-            auto packet = std::make_shared<pip_tcp_packet>(tcp, TH_RST | TH_ACK, nullptr, nullptr);
+            auto packet = tcp->create_tcp_packet(TH_RST | TH_ACK, nullptr, nullptr);
             tcp->send_packet(packet);
             tcp->release();
             
@@ -54,12 +53,12 @@ void pip_tcp::input(const void * bytes, std::shared_ptr<pip_ip_header> ip_header
         
         
         tcp = std::make_shared<pip_tcp>();
-        tcp->set_iden(iden);
-        tcp->set_seq(iden);
-        tcp->set_ip_header(ip_header);
+        tcp->_iden = iden;
+        tcp->_seq = iden;
+        tcp->_ip_header = ip_header;
 
-        tcp->set_src_port(sport);
-        tcp->set_dst_port(dport);
+        tcp->_src_port = sport;
+        tcp->_dst_port = dport;
         pip_tcp_manager::shared().add_tcp(iden, tcp);
         
     }

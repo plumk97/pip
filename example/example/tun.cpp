@@ -71,7 +71,7 @@ int open_tun_socket () {
     
     // 设置 UTUN 网关地址
     std::stringstream cmd;
-    cmd << "ifconfig " << ifname << " 192.168.33.1 192.168.33.1 netmask 255.255.255.255 mtu " << PIP_MTU << " up";
+    cmd << "ifconfig " << ifname << " 192.168.33.1 192.168.33.2 netmask 255.255.255.255 mtu " << PIP_MTU << " up";
     err = std::system(cmd.str().c_str());
     if (err != 0) {
         perror(nullptr);
@@ -80,12 +80,16 @@ int open_tun_socket () {
     }
     
     // 设置路由
-    err = std::system("route -n add -net 1.1.1.1/32 192.168.33.1");
-    if (err != 0) {
-        perror(nullptr);
-        close(fd);
-        return err;
-    }
-    
+//    cmd.str("");
+//    cmd.clear();
+//    
+//    cmd << "route add 192.168.33.2 -interface " << ifname;
+//    err = std::system(cmd.str().c_str());
+//    if (err != 0) {
+//        perror(nullptr);
+//        close(fd);
+//        return err;
+//    }
+//    
     return fd;
 }

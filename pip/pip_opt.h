@@ -24,6 +24,10 @@
 #define PIP_MTU 9000
 #endif
 
+#ifndef PIP_TCP_WIND_SHIFT
+#define PIP_TCP_WIND_SHIFT  8
+#endif
+
 #ifndef PIP_TCP_WIND
 #define PIP_TCP_WIND        65535
 #endif

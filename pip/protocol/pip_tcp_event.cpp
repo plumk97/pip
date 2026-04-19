@@ -1,6 +1,5 @@
 //
 //  pip_tcp_event.cpp
-//  example
 //
 //  Created by Plumk on 2026/1/8.
 //  Copyright © 2026 Plumk. All rights reserved.
@@ -15,7 +14,7 @@ void pip_tcp::process_events() {
     std::vector<decltype(this->_events)::value_type> events;
     {
         std::lock_guard<std::mutex> lock(this->_mutex);
-        events = this->_events;
+        events = std::move(this->_events);
         this->_events.clear();
     }
 
@@ -29,22 +28,22 @@ void pip_tcp::process_events() {
                     netif.new_tcp_connect_callback(netif, shared_from_this(), ev.buffer(), ev.buffer_len());
                 }
             } else if constexpr (std::is_same_v<T, pip_tcp_connected_event>) {
-                if (this->connected_callback != nullptr) {
-                    this->connected_callback(shared_from_this());
+                if (this->_connected_callback != nullptr) {
+                    this->_connected_callback(shared_from_this());
                 }
             } else if constexpr (std::is_same_v<T, pip_tcp_closed_event>) {
                 pip_tcp_manager::shared().remove_tcp(this->iden());
                 
-                if (this->closed_callback != nullptr) {
-                    this->closed_callback(shared_from_this(), ev.arg);
+                if (this->_closed_callback != nullptr) {
+                    this->_closed_callback(shared_from_this(), ev.arg);
                 }
             } else if constexpr (std::is_same_v<T, pip_tcp_written_event>) {
-                if (this->written_callback != nullptr) {
-                    this->written_callback(shared_from_this(), ev.written_len, ev.has_push, ev.is_drop);
+                if (this->_written_callback != nullptr) {
+                    this->_written_callback(shared_from_this(), ev.written_len, ev.has_push);
                 }
             } else if constexpr (std::is_same_v<T, pip_tcp_received_event>) {
-                if (this->received_callback != nullptr) {
-                    this->received_callback(shared_from_this(), ev.buffer(), ev.buffer_len());
+                if (this->_received_callback != nullptr) {
+                    this->_received_callback(shared_from_this(), ev.buffer(), ev.buffer_len());
                 }
             }
         }, e);

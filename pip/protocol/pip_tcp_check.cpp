@@ -10,23 +10,23 @@
 
 void pip_tcp::_timer_tick(pip_uint64 now) {
     auto & manager = pip_tcp_manager::shared();
-    if (this->status() == pip_tcp_status_released) {
-        manager.remove_tcp(this->iden());
+    if (this->_status == pip_tcp_status_released) {
+        manager.remove_tcp(this->_iden);
         return;
     }
     
-    if ((this->status() == pip_tcp_status_fin_wait_1 || this->status() == pip_tcp_status_fin_wait_2 || this->status() == pip_tcp_status_close_wait) &&
-        now - this->fin_time() >= 20000) {
+    if ((this->_status == pip_tcp_status_fin_wait_1 || this->_status == pip_tcp_status_fin_wait_2 || this->_status == pip_tcp_status_close_wait) &&
+        now - this->_fin_time >= 20000) {
         /// 处于等待关闭状态 并且等待时间已经大于20秒 直接关闭
         this->release();
         return;
     }
 
-    if (this->packet_queue()->empty()) {
+    if (this->_packet_queue->empty()) {
         return;
     }
     
-    auto packet = this->packet_queue()->front();
+    auto packet = this->_packet_queue->front();
     if (now - packet->send_time() < 1000) {
         return;
     }

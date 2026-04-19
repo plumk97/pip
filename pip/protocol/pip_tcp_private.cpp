@@ -9,9 +9,21 @@
 #include "../pip_netif.h"
 
 
+std::shared_ptr<pip_tcp_packet> pip_tcp::create_tcp_packet(pip_uint8 flags, std::shared_ptr<pip_buf> option_buf, std::shared_ptr<pip_buf> payload_buf) {
+    return std::make_shared<pip_tcp_packet>(this->_ip_header,
+                                            this->_dst_port,
+                                            this->_src_port,
+                                            this->_seq,
+                                            this->_ack,
+                                            this->_wind >> this->_wind_shift,
+                                            flags,
+                                            option_buf,
+                                            payload_buf);
+}
+
 
 void pip_tcp::_connected(const void * handshake_data) {
-    if (this->status() != pip_tcp_status_wait_establishing) {
+    if (this->_status != pip_tcp_status_wait_establishing) {
         return;
     }
     
@@ -31,7 +43,7 @@ void pip_tcp::_connected(const void * handshake_data) {
 }
 
 void pip_tcp::_close() {
-    pip_tcp_status status = this->status();
+    pip_tcp_status status = this->_status;
     switch (status) {
         case pip_tcp_status_none: {
             this->release();
@@ -45,11 +57,11 @@ void pip_tcp::_close() {
         }
             
         case pip_tcp_status_established: {
-            this->set_status(pip_tcp_status_fin_wait_1);
-            this->set_fin_time(get_current_time());
+            this->_status = pip_tcp_status_fin_wait_1;
+            this->_fin_time = get_current_time();
 
-            auto packet = std::make_shared<pip_tcp_packet>(shared_from_this(), TH_FIN | TH_ACK, nullptr, nullptr);
-            this->packet_queue()->push(packet);
+            auto packet = this->create_tcp_packet(TH_FIN | TH_ACK, nullptr, nullptr);
+            this->_packet_queue->push(packet);
             this->send_packet(packet);
             break;
         }
@@ -60,14 +72,14 @@ void pip_tcp::_close() {
 }
 
 pip_uint32 pip_tcp::_write(const void *bytes, pip_uint32 len, bool is_copy) {
-    if (_maximum_write_length() <= 0) {
+    if (_maximum_write_length() <= 0 || len <= 0) {
         return 0;
     }
     
     pip_uint32 offset = 0;
-    while (offset < len && this->opp_wind() > 0) {
+    while (offset < len && this->_opp_wind > 0) {
         
-        pip_uint16 write_len = this->opp_mss();
+        pip_uint16 write_len = this->_opp_mss;
         
         /// 获取小于等于mss的数据长度
         if (offset + write_len > len) {
@@ -75,8 +87,8 @@ pip_uint32 pip_tcp::_write(const void *bytes, pip_uint32 len, bool is_copy) {
         }
         
         /// 获取小于等于对方的窗口长度
-        if (write_len > this->opp_wind()) {
-            write_len = this->opp_wind();
+        if (write_len > this->_opp_wind) {
+            write_len = this->_opp_wind;
         }
         
         if (write_len <= 0) {
@@ -84,24 +96,24 @@ pip_uint32 pip_tcp::_write(const void *bytes, pip_uint32 len, bool is_copy) {
         }
         
         /// 如果当前发送数据大于等于总数据长度 或者 对方窗口为0 则发送PUSH标签
-        pip_uint8 is_push = offset + write_len >= len || write_len >= this->opp_wind();
+        pip_uint8 is_push = offset + write_len >= len || write_len >= this->_opp_wind;
         
         auto payload_buf = std::make_shared<pip_buf>((pip_uint8 *)bytes + offset, write_len, is_copy);
         std::shared_ptr<pip_tcp_packet> packet;
         
         if (is_push) {
-            packet = std::make_shared<pip_tcp_packet>(shared_from_this(), TH_PUSH | TH_ACK, nullptr, payload_buf);
-            this->set_is_wait_push_ack(true);
+            packet = this->create_tcp_packet(TH_PUSH | TH_ACK, nullptr, payload_buf);
+            this->_is_wait_push_ack = true;
             
         } else {
-            packet = std::make_shared<pip_tcp_packet>(shared_from_this(), TH_ACK, nullptr, payload_buf);
+            packet = this->create_tcp_packet(TH_ACK, nullptr, payload_buf);
         }
         
-        this->packet_queue()->push(packet);
+        this->_packet_queue->push(packet);
         this->send_packet(packet);
         
         offset += write_len;
-        this->set_opp_wind(this->opp_wind() - write_len);
+        this->_opp_wind = this->_opp_wind - write_len;
     }
     
     return offset;
@@ -116,20 +128,19 @@ pip_uint32 pip_tcp::_maximum_write_length() {
 }
 
 void pip_tcp::_received(pip_uint16 len) {
-    if (this->status() != pip_tcp_status_established) {
+    if (this->_status != pip_tcp_status_established) {
         return;
     }
-    
-    this->set_wind(PIP_MIN(this->wind() + len, PIP_TCP_WIND));
+    this->_wind = PIP_MIN(this->_wind + len, PIP_TCP_WIND << PIP_TCP_WIND_SHIFT);
     
     // 判断当前是否是最后一次接受的包 如果是直接回复 否等待其它包一起回复
-    if (this->ack() - len == this->opp_seq() || this->wind() - len <= 0) {
+    if (this->_ack - len == this->_opp_seq || this->_wind - len <= 0) {
         this->send_ack();
     }
 }
 
 void pip_tcp::_reset() {
-    auto packet = std::make_shared<pip_tcp_packet>(shared_from_this(), TH_RST | TH_ACK, nullptr, nullptr);
+    auto packet = this->create_tcp_packet(TH_RST | TH_ACK, nullptr, nullptr);
     this->send_packet(packet);
     this->release();
 }
@@ -141,13 +152,13 @@ void pip_tcp::send_packet(std::shared_ptr<pip_tcp_packet> packet) {
     tcphdr * hdr = packet->hdr();
     pip_uint16 datalen = packet->payload_len();
     
-    if (this->ip_header()->version() == 4) {
-        pip_netif::shared().output4(packet->head_buf(), IPPROTO_TCP, this->ip_header()->ip_dst(), this->ip_header()->ip_src());
+    if (this->_ip_header->version() == 4) {
+        pip_netif::shared().output4(packet->head_buf(), IPPROTO_TCP, this->_ip_header->ip_dst(), this->_ip_header->ip_src());
     } else {
-        pip_netif::shared().output6(packet->head_buf(), IPPROTO_TCP, this->ip_header()->ip6_dst(), this->ip_header()->ip6_src());
+        pip_netif::shared().output6(packet->head_buf(), IPPROTO_TCP, this->_ip_header->ip6_dst(), this->_ip_header->ip6_src());
     }
     
-    this->set_seq(increase_seq(this->seq(), hdr->th_flags, datalen));
+    this->_seq = increase_seq(this->_seq, hdr->th_flags, datalen);
     
 #if PIP_DEBUG
     pip_debug_output_tcp(shared_from_this(), packet, "tcp_send");
@@ -157,10 +168,10 @@ void pip_tcp::send_packet(std::shared_ptr<pip_tcp_packet> packet) {
 void
 pip_tcp::resend_packet(std::shared_ptr<pip_tcp_packet> packet) {
     packet->sended();
-    if (this->ip_header()->version() == 4) {
-        pip_netif::shared().output4(packet->head_buf(), IPPROTO_TCP, this->ip_header()->ip_dst(), this->ip_header()->ip_src());
+    if (this->_ip_header->version() == 4) {
+        pip_netif::shared().output4(packet->head_buf(), IPPROTO_TCP, this->_ip_header->ip_dst(), this->_ip_header->ip_src());
     } else {
-        pip_netif::shared().output6(packet->head_buf(), IPPROTO_TCP, this->ip_header()->ip6_dst(), this->ip_header()->ip6_src());
+        pip_netif::shared().output6(packet->head_buf(), IPPROTO_TCP, this->_ip_header->ip6_dst(), this->_ip_header->ip6_src());
     }
     
 #if PIP_DEBUG
@@ -169,7 +180,7 @@ pip_tcp::resend_packet(std::shared_ptr<pip_tcp_packet> packet) {
 }
 
 void pip_tcp::send_ack() {
-    auto packet = std::make_shared<pip_tcp_packet>(shared_from_this(), TH_ACK, nullptr, nullptr);
+    auto packet = this->create_tcp_packet(TH_ACK, nullptr, nullptr);
     this->send_packet(packet);
 }
 
@@ -182,8 +193,8 @@ void pip_tcp::handle_ack(pip_uint32 ack, bool is_update_wind) {
     bool has_push = false;
     pip_uint32 written_length = 0;
     
-    while (!this->packet_queue()->empty()) {
-        auto pkt = this->packet_queue()->front();
+    while (!this->_packet_queue->empty()) {
+        auto pkt = this->_packet_queue->front();
         struct tcphdr * hdr = pkt->hdr();
 
         if (hdr == nullptr) {
@@ -198,7 +209,7 @@ void pip_tcp::handle_ack(pip_uint32 ack, bool is_update_wind) {
 #endif
             break;
         }
-        this->packet_queue()->pop();
+        this->_packet_queue->pop();
         
         if (hdr->th_flags & TH_SYN) {
             has_syn = true;
@@ -209,7 +220,7 @@ void pip_tcp::handle_ack(pip_uint32 ack, bool is_update_wind) {
             
             if (hdr->th_flags & TH_PUSH) {
                 has_push = true;
-                this->set_is_wait_push_ack(false);
+                this->_is_wait_push_ack = false;
             }
         }
         
@@ -225,21 +236,21 @@ void pip_tcp::handle_ack(pip_uint32 ack, bool is_update_wind) {
 #endif
     
     if (has_syn) {
-        this->set_status(pip_tcp_status_established);
+        this->_status = pip_tcp_status_established;
         this->_events.push_back(pip_tcp_connected_event());
     }
     
     if (written_length > 0 || is_update_wind) {
-        this->_events.push_back(pip_tcp_written_event(written_length, has_push, false));
+        this->_events.push_back(pip_tcp_written_event(written_length, has_push));
     }
     
     if (has_fin) {
-        if (this->status() == pip_tcp_status_fin_wait_1) {
+        if (this->_status == pip_tcp_status_fin_wait_1) {
             /// 主动关闭 改变状态
-            this->set_status(pip_tcp_status_fin_wait_2);
-            this->set_fin_time(get_current_time());
+            this->_status = pip_tcp_status_fin_wait_2;
+            this->_fin_time = get_current_time();
             
-        } else if (this->status() == pip_tcp_status_close_wait) {
+        } else if (this->_status == pip_tcp_status_close_wait) {
             /// 被动关闭 清理资源
             this->release();
         }
@@ -247,7 +258,7 @@ void pip_tcp::handle_ack(pip_uint32 ack, bool is_update_wind) {
 }
 
 void pip_tcp::handle_syn(const void * options, pip_uint16 optionlen) {
-    this->set_status(pip_tcp_status_establishing);
+    this->_status = pip_tcp_status_establishing;
     
 #if PIP_DEBUG
     printf("[tcp_handle_syn]:\n");
@@ -299,7 +310,7 @@ void pip_tcp::handle_syn(const void * options, pip_uint16 optionlen) {
                     pip_uint16 mss = 0;
                     if (value_len >= sizeof(pip_uint16)) {
                         memcpy(&mss, bytes + offset, sizeof(pip_uint16));
-                        this->set_opp_mss(ntohs(mss));
+                        this->_opp_mss = ntohs(mss);
                     }
 #if PIP_DEBUG
                     printf("mss: %d\n", ntohs(mss));
@@ -311,7 +322,7 @@ void pip_tcp::handle_syn(const void * options, pip_uint16 optionlen) {
                     pip_uint8 shift = 0;
                     if (value_len >= sizeof(pip_uint8)) {
                         memcpy(&shift, bytes + offset, sizeof(pip_uint8));
-                        this->set_opp_wind_shift(shift);
+                        this->_opp_wind_shift = shift;
                     }
                     break;
                 }
@@ -336,7 +347,7 @@ void pip_tcp::handle_syn(const void * options, pip_uint16 optionlen) {
         // mss
         pip_uint8 kind = 2;
         pip_uint8 len = 4;
-        pip_uint16 value = htons(PIP_MIN(this->mss(), this->opp_mss()));
+        pip_uint16 value = htons(PIP_MIN(this->_mss, this->_opp_mss));
 
         memcpy(optionBuffer, &kind, 1);
         memcpy(optionBuffer + 1, &len, 1);
@@ -349,7 +360,7 @@ void pip_tcp::handle_syn(const void * options, pip_uint16 optionlen) {
         // window scale
         pip_uint8 kind = 3;
         pip_uint8 len = 3;
-        pip_uint8 value = 0;
+        pip_uint8 value = this->_wind_shift;
 
         memcpy(optionBuffer + offset, &kind, 1);
         memcpy(optionBuffer + offset + 1, &len, 1);
@@ -358,16 +369,16 @@ void pip_tcp::handle_syn(const void * options, pip_uint16 optionlen) {
         offset += len;
     }
     
-    auto packet = std::make_shared<pip_tcp_packet>(shared_from_this(), TH_SYN | TH_ACK, option_buf, nullptr);
-    this->packet_queue()->push(packet);
+    auto packet = this->create_tcp_packet(TH_SYN | TH_ACK, option_buf, nullptr);
+    this->_packet_queue->push(packet);
     this->send_packet(packet);
 }
 
 void pip_tcp::handle_fin() {
-    switch (this->status()) {
+    switch (this->_status) {
         case pip_tcp_status_fin_wait_2: {
             /// 主动关闭 回复ack 清理资源
-            auto packet = std::make_shared<pip_tcp_packet>(shared_from_this(), TH_ACK, nullptr, nullptr);
+            auto packet = this->create_tcp_packet(TH_ACK, nullptr, nullptr);
             this->send_packet(packet);
             this->release();
             break;
@@ -375,14 +386,14 @@ void pip_tcp::handle_fin() {
             
         case pip_tcp_status_established: {
             /// 被动关闭回复
-            this->set_status(pip_tcp_status_close_wait);
+            this->_status = pip_tcp_status_close_wait;
             
 //        pip_tcp_packet * packet = new pip_tcp_packet(this, TH_ACK, nullptr, nullptr, "pip_tcp::handle_fin2");
 //        this->send_packet(packet);
 //        delete packet;
 //
-            auto packet = std::make_shared<pip_tcp_packet>(shared_from_this(), TH_FIN | TH_ACK, nullptr, nullptr);
-            this->packet_queue()->push(packet);
+            auto packet = this->create_tcp_packet(TH_FIN | TH_ACK, nullptr, nullptr);
+            this->_packet_queue->push(packet);
             this->send_packet(packet);
             break;
         }
@@ -401,13 +412,13 @@ void pip_tcp::handle_receive(const void *data, pip_uint16 datalen) {
     printf("\n\n");
 #endif
     
-    this->set_wind(this->wind() - datalen);
+    this->_wind = this->_wind - datalen;
     this->_events.push_back(pip_tcp_received_event(data, datalen));
 }
 
 /// 处理Input
 void pip_tcp::handle_input(std::shared_ptr<pip_ip_header> ip_header, struct tcphdr *hdr, const void *bytes, pip_uint16 datalen) {
-    if (this->status() == pip_tcp_status_released) {
+    if (this->_status == pip_tcp_status_released) {
         return;
     }
     
@@ -417,28 +428,28 @@ void pip_tcp::handle_input(std::shared_ptr<pip_ip_header> ip_header, struct tcph
         return;
     }
     
-    if (hdr->th_flags == TH_ACK && ntohl(hdr->th_seq) == this->ack() - 1) {
+    if (hdr->th_flags == TH_ACK && ntohl(hdr->th_seq) == this->_ack - 1) {
         // keep-alive 包 直接回复
         this->send_ack();
         return;
     }
     
-    if (this->ack() > 0) {
-        if (ntohl(hdr->th_seq) != this->ack()) {
+    if (this->_ack > 0) {
+        if (ntohl(hdr->th_seq) != this->_ack) {
             /// 当前数据包seq与之前的ack对不上 产生了丢包 回复之前的ack 等待重传
             this->send_ack();
             return;
         }
     }
     
-    this->set_opp_seq(ntohl(hdr->th_seq));
-    this->set_ack(increase_seq(ntohl(hdr->th_seq), hdr->th_flags, datalen));
+    this->_opp_seq = ntohl(hdr->th_seq);
+    this->_ack = increase_seq(ntohl(hdr->th_seq), hdr->th_flags, datalen);
     
     bool is_update_wind = false;
-    if (this->opp_wind() <= 0 && this->is_wait_push_ack() == false) {
+    if (this->_opp_wind <= 0 && this->_is_wait_push_ack == false) {
         is_update_wind = true;
     }
-    this->set_opp_wind(pip_uint32(ntohs(hdr->th_win)) << this->opp_wind_shift());
+    this->_opp_wind = pip_uint32(ntohs(hdr->th_win)) << this->_opp_wind_shift;
     
     if (hdr->th_flags & TH_PUSH || datalen > 0) {
         this->handle_receive((pip_uint8 *)bytes + hdr->th_off * 4, datalen);
@@ -448,17 +459,17 @@ void pip_tcp::handle_input(std::shared_ptr<pip_ip_header> ip_header, struct tcph
         this->handle_ack(ntohl(hdr->th_ack), is_update_wind);
     }
     
-    if (this->status() == pip_tcp_status_released) {
+    if (this->_status == pip_tcp_status_released) {
         /// 在handle_ack里已经释放
         return;
     }
     
     if (hdr->th_flags & TH_SYN) {
         
-        switch (this->status()) {
+        switch (this->_status) {
             case pip_tcp_status_none: {
                 // 建立连接
-                this->set_status(pip_tcp_status_wait_establishing);
+                this->_status = pip_tcp_status_wait_establishing;
                 this->_events.push_back(pip_tcp_connect_event(bytes, hdr->th_off * 4));
                 break;
             }

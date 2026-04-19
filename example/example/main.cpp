@@ -12,11 +12,114 @@
 #include <sys/socket.h>
 #include <unistd.h>
 #include <net/if.h>
+#include <arpa/inet.h>
+#include <cerrno>
+#include <cstring>
+#include <mutex>
 #include <thread>
 #include "tcp_birdge.hpp"
 #include <map>
+#include <unordered_map>
+#include <vector>
 
 int tun_sock_fd = -1;
+
+namespace {
+
+struct udp_route {
+    std::string src_ip;
+    pip_uint16 src_port = 0;
+    std::string dst_ip;
+};
+
+struct udp_relay_state {
+    int fd = -1;
+    bool receiver_running = false;
+    std::mutex mutex;
+    std::unordered_map<pip_uint64, udp_route> routes;
+};
+
+udp_relay_state g_udp_relay_state;
+
+pip_uint64 make_udp_route_key(pip_uint32 addr, pip_uint16 port) {
+    return (static_cast<pip_uint64>(addr) << 16) | port;
+}
+
+constexpr const char * k_udp_target_ip = "127.0.0.1";
+
+void reset_udp_relay_locked() {
+    if (g_udp_relay_state.fd >= 0) {
+        close(g_udp_relay_state.fd);
+    }
+    g_udp_relay_state.fd = -1;
+    g_udp_relay_state.receiver_running = false;
+    g_udp_relay_state.routes.clear();
+}
+
+void udp_relay_receive_loop(int fd) {
+    std::vector<uint8_t> recv_buffer(65535);
+    while (true) {
+        struct sockaddr_in addr;
+        memset(&addr, 0, sizeof(addr));
+        socklen_t len = sizeof(addr);
+        ssize_t ret = recvfrom(fd, recv_buffer.data(), recv_buffer.size(), 0, (struct sockaddr *)&addr, &len);
+        if (ret <= 0) {
+            break;
+        }
+
+        udp_route route;
+        {
+            std::lock_guard<std::mutex> lock(g_udp_relay_state.mutex);
+            if (g_udp_relay_state.fd != fd) {
+                break;
+            }
+
+            auto it = g_udp_relay_state.routes.find(make_udp_route_key(addr.sin_addr.s_addr, ntohs(addr.sin_port)));
+            if (it == g_udp_relay_state.routes.end()) {
+                continue;
+            }
+            route = it->second;
+        }
+
+        pip_udp::output(recv_buffer.data(), (pip_uint16)ret, route.dst_ip.c_str(), ntohs(addr.sin_port), route.src_ip.c_str(), route.src_port);
+    }
+
+    std::lock_guard<std::mutex> lock(g_udp_relay_state.mutex);
+    if (g_udp_relay_state.fd == fd) {
+        reset_udp_relay_locked();
+    }
+}
+
+bool ensure_udp_relay_ready() {
+    std::lock_guard<std::mutex> lock(g_udp_relay_state.mutex);
+    if (g_udp_relay_state.fd >= 0) {
+        return true;
+    }
+
+    int fd = socket(AF_INET, SOCK_DGRAM, 0);
+    if (fd < 0) {
+        return false;
+    }
+
+    int index = if_nametoindex("lo0");
+    if (index == 0) {
+        close(fd);
+        return false;
+    }
+
+    if (setsockopt(fd, IPPROTO_IP, IP_BOUND_IF, &index, sizeof(index)) == -1) {
+        close(fd);
+        return false;
+    }
+
+    g_udp_relay_state.fd = fd;
+    g_udp_relay_state.receiver_running = true;
+    std::thread thread(udp_relay_receive_loop, fd);
+    thread.detach();
+    return true;
+}
+
+} // namespace
 
 /// 输出IP包
 void _pip_netif_output_ip_data_callback (pip_netif & netif, std::shared_ptr<pip_buf> buf) {
@@ -49,88 +152,46 @@ void _pip_netif_new_tcp_connect_callback (pip_netif & netif, std::shared_ptr<pip
 
 /// 接受到UDP包
 void _pip_netif_received_udp_data_callback(pip_netif & netif, void * buffer, pip_uint16 buffer_len, const char * src_ip, pip_uint16 src_port, const char * dst_ip, pip_uint16 dst_port, pip_uint8 version) {
-    
-    static int fd = -1;
-    static std::map<pip_uint32, pip_uint16> udp_ports;
-    
-    if (fd < 0) {
-        fd = socket(AF_INET, SOCK_DGRAM, 0);
-        if (fd < 0) return;
-        
-        // - 绑定 interface
-        int index = if_nametoindex("lo0");
-        if (index == 0) {
-            close(fd);
-            fd = -1;
-            return;
-        }
-        
-        if (setsockopt(fd, IPPROTO_IP, IP_BOUND_IF, &index, sizeof(index)) == -1) {
-            close(fd);
-            fd = -1;
-            return;
-        }
-        
-        
-        std::thread thread([] {
-            // - 接受数据
-            uint8_t * recv_buffer = (uint8_t *)malloc(65535);
-            struct sockaddr_in addr;
-            socklen_t len = sizeof(sockaddr_in);
-            while (true) {
-                auto ret = recvfrom(fd, (void *)recv_buffer, 65535, 0, (struct sockaddr *)&addr, &len);
-                if (ret <= 0) {
-                    std::cout << strerror(errno) << std::endl;
-                    break;
-                }
-                
-        
-                char * ip = inet_ntoa(addr.sin_addr);
-                
-                // 查找对应的src_port
-                pip_uint32 iden = addr.sin_addr.s_addr ^ addr.sin_port;
-                if (udp_ports.find(iden) == udp_ports.end()) {
-                    continue;
-                }
-                pip_uint16 src_port = udp_ports[iden];
-                
-                // - 将数据输出到pip进行处理 注意地址来源交换
-                if (strcmp(ip, "127.0.0.1") == 0) {
-                    pip_udp::output(recv_buffer, ret, "1.1.1.1", ntohs(addr.sin_port), "192.168.33.1", src_port);
-                } else {
-                    pip_udp::output(recv_buffer, ret, ip, ntohs(addr.sin_port), "192.168.33.1", src_port);
-                }
-            }
-            
-        
-            free(recv_buffer);
-            close(fd);
-            fd = -1;
-        });
-        thread.detach();
-    }
-    
+    (void)netif;
 
-    // - 向远端发起数据
+    if (version != 4) {
+        return;
+    }
+
+    if (ensure_udp_relay_ready() == false) {
+        return;
+    }
+
+    pip_in_addr addr_value;
+    if (inet_pton(AF_INET, k_udp_target_ip, &addr_value) != 1) {
+        return;
+    }
+
     struct sockaddr_in addr;
-    memset(&addr, 0, sizeof(struct sockaddr_in));
+    memset(&addr, 0, sizeof(addr));
     addr.sin_family = AF_INET;
     addr.sin_port = htons(dst_port);
-    if (strcmp(dst_ip, "1.1.1.1") == 0) {
-        addr.sin_addr.s_addr = inet_addr("127.0.0.1");
-    } else {
-        addr.sin_addr.s_addr = inet_addr(dst_ip);
-    }
-    addr.sin_len = sizeof(struct sockaddr_in);
+    addr.sin_addr = addr_value;
+    addr.sin_len = sizeof(addr);
 
-    // 记录src_port
-    udp_ports[addr.sin_addr.s_addr ^ addr.sin_port] = src_port;
-    
+    int fd = -1;
+    {
+        std::lock_guard<std::mutex> lock(g_udp_relay_state.mutex);
+        if (g_udp_relay_state.fd < 0) {
+            return;
+        }
+        fd = g_udp_relay_state.fd;
+        g_udp_relay_state.routes[make_udp_route_key(addr.sin_addr.s_addr, dst_port)] = {src_ip, src_port, dst_ip};
+    }
+
     auto ret = sendto(fd, buffer, buffer_len, 0, (struct sockaddr *)&addr, sizeof(sockaddr_in));
-    if (ret <= 0) {
-        close(fd);
-        fd = -1;
+    if (ret == buffer_len) {
         return;
+    }
+
+    std::lock_guard<std::mutex> lock(g_udp_relay_state.mutex);
+    if (g_udp_relay_state.fd == fd) {
+        reset_udp_relay_locked();
     }
 }
 

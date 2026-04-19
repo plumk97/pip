@@ -6,17 +6,11 @@
 
 #include "pip_icmp.h"
 #include "../pip_netif.h"
-#include "../pip_debug.h"
 
 
 void pip_icmp::input(const void *bytes, std::shared_ptr<pip_ip_header> ip_header) {
     
     pip_uint16 datalen = ip_header->datalen();
-    
-#if PIP_DEBUG
-    struct icmp *hdr = (struct icmp *)bytes;
-    pip_debug_output_icmp(hdr, "icmp_input");
-#endif
     
     pip_netif & netif = pip_netif::shared();
     if (netif.received_icmp_data_callback) {

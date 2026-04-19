@@ -1,6 +1,5 @@
 //
 //  pip_tcp_event.h
-//  example
 //
 //  Created by Plumk on 2026/1/8.
 //  Copyright © 2026 Plumk. All rights reserved.
@@ -50,33 +49,30 @@ class pip_tcp_written_event {
 public:
     pip_uint16 written_len;
     bool has_push;
-    bool is_drop;
     
-    pip_tcp_written_event(pip_uint16 written_len, bool has_push, bool is_drop) {
+    pip_tcp_written_event(pip_uint16 written_len, bool has_push) {
         this->written_len = written_len;
         this->has_push = has_push;
-        this->is_drop = is_drop;
     }
 };
 
 class pip_tcp_received_event {
     
 public:
-    std::vector<pip_uint8> data;
+    const void *data;
+    pip_uint32 data_len;
     
     pip_tcp_received_event(const void *buffer, pip_uint32 buffer_len) {
-        if (buffer != nullptr && buffer_len > 0) {
-            const pip_uint8 * ptr = (const pip_uint8 *)buffer;
-            this->data.assign(ptr, ptr + buffer_len);
-        }
+        this->data = buffer;
+        this->data_len = buffer_len;
     }
 
     const void * buffer() const {
-        return this->data.empty() ? nullptr : this->data.data();
+        return this->data;
     }
 
     pip_uint32 buffer_len() const {
-        return (pip_uint32)this->data.size();
+        return this->data_len;
     }
 };
 
