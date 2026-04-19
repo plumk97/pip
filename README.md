@@ -7,7 +7,7 @@
 ## 注意
 1. MTU默认为9000
 2. TCP每个数据包超时时间为2秒, 重传2次
-3. 自身window固定为65535, 对方window兼容 window scaling
+3. 自身`window`固定为65535, `wind_shift`固定为8
 
 ## 性能测试
 
@@ -20,9 +20,8 @@
 
 1. 开启iperf3服务端
 2. 建立utun network interface, 设置MTU为9000
-3. 路由1.1.1.1到该utun interface
-4. 开启iperf3客户端并指定地址为1.1.1.1
-5. 重定向1.1.1.1到127.0.0.1以连接到iperf3服务端
+4. 开启iperf3客户端并指定地址为192.168.33.2
+5. 重定向192.168.33.2到127.0.0.1以连接到iperf3服务端
 
 **数据流向示意**
 
@@ -30,7 +29,7 @@
 
 **上传测试**
 ```
-~ iperf3 -c 1.1.1.1
+~ iperf3 -c 192.168.33.2
 [ ID] Interval           Transfer     Bitrate         Retr
 [  5]   0.00-10.00  sec  8.82 GBytes  7.58 Gbits/sec    0             sender
 [  5]   0.00-10.00  sec  8.82 GBytes  7.58 Gbits/sec                  receiver
@@ -38,12 +37,12 @@
 
 **下载测试**
 ```
-~ iperf3 -c 1.1.1.1 -R
+~ iperf3 -c 192.168.33.2 -R
 [ ID] Interval           Transfer     Bitrate         Retr
 [  5]   0.00-10.00  sec  7.52 GBytes  6.46 Gbits/sec    0             sender
 [  5]   0.00-10.00  sec  7.45 GBytes  6.40 Gbits/sec                  receiver
 
-~ iperf3 -c 1.1.1.1 -R -P 5
+~ iperf3 -c 192.168.33.2 -R -P 5
 [ ID] Interval           Transfer     Bitrate         Retr
 [  5]   0.00-10.02  sec  3.21 GBytes  2.75 Gbits/sec    0             sender
 [  5]   0.00-10.00  sec  3.18 GBytes  2.74 Gbits/sec                  receiver
