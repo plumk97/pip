@@ -63,17 +63,3 @@ pip_ip_header::~pip_ip_header() {
     }
 }
 
-
-/// 生成32位标识
-pip_uint32 pip_ip_header::generate_iden() {
-    
-    if (this->_version == 4) {
-        return this->_ip_src.s_addr ^ this->_ip_dst.s_addr ^ 4;
-    }
-    
-    pip_uint32 *s_addrs = (pip_uint32 *)&this->_ip6_src;
-    pip_uint32 *d_addrs = (pip_uint32 *)&this->_ip6_dst;
-    
-    return (s_addrs[0] ^ s_addrs[1] ^ s_addrs[2] ^ s_addrs[3] ^
-            d_addrs[0] ^ d_addrs[1] ^ d_addrs[2] ^ d_addrs[3] ^ 6);
-}

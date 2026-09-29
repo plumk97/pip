@@ -9,11 +9,14 @@
 #include "pip_tcp_manager.h"
 
 void pip_tcp::input(const void * bytes, std::shared_ptr<pip_ip_header> ip_header) {
-    struct tcphdr *hdr = (struct tcphdr *)bytes;
-
     pip_uint16 ip_datalen = ip_header->datalen();
+    if (ip_datalen < sizeof(struct tcphdr)) {
+        return;
+    }
+
+    struct tcphdr *hdr = (struct tcphdr *)bytes;
     pip_uint16 tcp_header_len = hdr->th_off * 4;
-    if (ip_datalen < sizeof(struct tcphdr) || hdr->th_off < 5 || tcp_header_len > ip_datalen) {
+    if (hdr->th_off < 5 || tcp_header_len > ip_datalen) {
         return;
     }
 
@@ -26,19 +29,18 @@ void pip_tcp::input(const void * bytes, std::shared_ptr<pip_ip_header> ip_header
     }
     
     
-    pip_uint32 iden = ip_header->generate_iden() ^ dport ^ sport;
-    std::shared_ptr<pip_tcp> tcp = pip_tcp_manager::shared().fetch_tcp(iden);
+    pip_tcp_key key(ip_header, sport, dport);
+    std::shared_ptr<pip_tcp> tcp = pip_tcp_manager::shared().fetch_tcp(key);
     if (tcp == nullptr) {
         
         if (!(hdr->th_flags & TH_SYN) || pip_tcp_manager::shared().size() >= PIP_TCP_MAX_CONNS) {
             
             // 不存在的连接 直接返回RST
             tcp = std::make_shared<pip_tcp>();
-            tcp->_iden = iden;
-            tcp->_seq = iden;
+            tcp->_key = key;
             tcp->_ip_header = ip_header;
             
-            tcp->_src_port = ntohs(hdr->th_sport);
+            tcp->_src_port = sport;
             tcp->_dst_port = dport;
             
             tcp->_seq = ntohl(hdr->th_ack);
@@ -53,13 +55,13 @@ void pip_tcp::input(const void * bytes, std::shared_ptr<pip_ip_header> ip_header
         
         
         tcp = std::make_shared<pip_tcp>();
-        tcp->_iden = iden;
-        tcp->_seq = iden;
+        tcp->_key = key;
+        tcp->_seq = pip_tcp_generate_isn();
         tcp->_ip_header = ip_header;
 
         tcp->_src_port = sport;
         tcp->_dst_port = dport;
-        pip_tcp_manager::shared().add_tcp(iden, tcp);
+        pip_tcp_manager::shared().add_tcp(key, tcp);
         
     }
 

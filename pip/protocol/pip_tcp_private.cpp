@@ -387,6 +387,7 @@ void pip_tcp::handle_fin() {
         case pip_tcp_status_established: {
             /// 被动关闭回复
             this->_status = pip_tcp_status_close_wait;
+            this->_fin_time = get_current_time();
             
 //        pip_tcp_packet * packet = new pip_tcp_packet(this, TH_ACK, nullptr, nullptr, "pip_tcp::handle_fin2");
 //        this->send_packet(packet);

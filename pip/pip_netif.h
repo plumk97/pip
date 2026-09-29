@@ -54,7 +54,8 @@ public:
     
     /// 输入IP包
     /// @param buffer _
-    void input(const void * buffer);
+    /// @param len buffer 的实际长度
+    void input(const void * buffer, pip_uint32 len);
     
     /// 内部使用 外部通过 pip_netif_output_callback 获取输出的IP包
     /// @param buf _

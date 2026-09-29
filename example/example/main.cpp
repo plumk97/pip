@@ -222,14 +222,14 @@ int main(int argc, const char * argv[]) {
     uint8_t * buffer = (uint8_t *)malloc(PIP_MTU + 4);
     while (true) {
         ssize_t len = recv(tun_sock_fd, buffer, PIP_MTU + 4, 0);
-        if (len > 0) {
+        if (len > 4) {
             // 前4个字节代表地址族
 //            uint32_t family = 0;
 //            memcpy(&family, buffer, 4);
 //            family = htonl(family);
 
             // 获取ip包数据写入pip处理
-            pip_netif::shared().input((const void *)(buffer+4));
+            pip_netif::shared().input((const void *)(buffer+4), (pip_uint32)(len - 4));
         }
     }
     return 0;

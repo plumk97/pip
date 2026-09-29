@@ -40,11 +40,28 @@ typedef void (*pip_tcp_written_callback) (std::shared_ptr<pip_tcp> tcp, pip_uint
 bool is_before_seq(pip_uint32 seq, pip_uint32 ack);
 pip_uint32 increase_seq(pip_uint32 seq, pip_uint8 flags, pip_uint32 datalen);
 
+/// 生成随机初始序号
+pip_uint32 pip_tcp_generate_isn();
+
+/// 连接标识 (IP版本 + 源/目的地址 + 源/目的端口)
+struct pip_tcp_key {
+    pip_uint8 version = 0;
+    pip_uint16 src_port = 0;
+    pip_uint16 dst_port = 0;
+    pip_uint8 src_addr[16] = {};
+    pip_uint8 dst_addr[16] = {};
+
+    pip_tcp_key() = default;
+    pip_tcp_key(std::shared_ptr<pip_ip_header> ip_header, pip_uint16 src_port, pip_uint16 dst_port);
+
+    bool operator<(const pip_tcp_key & other) const;
+};
+
 
 class pip_tcp : public std::enable_shared_from_this<pip_tcp> {
     
     /// 连接标识
-    pip_uint32 _iden;
+    pip_tcp_key _key;
     
     /// 包队列
     std::shared_ptr<std::queue<std::shared_ptr<pip_tcp_packet>>> _packet_queue;
@@ -110,13 +127,6 @@ class pip_tcp : public std::enable_shared_from_this<pip_tcp> {
     pip_tcp_written_callback _written_callback;
 
 public:
-    pip_uint32 iden() { 
-        _mutex.lock();
-        pip_uint32 iden = this->_iden;
-        _mutex.unlock();
-        return iden; 
-    }
-
     std::shared_ptr<std::queue<std::shared_ptr<pip_tcp_packet>>> packet_queue() { 
         _mutex.lock();
         auto queue = this->_packet_queue;
@@ -313,6 +323,7 @@ private:
 private:
     /// 处理事件
     void process_events();
+    void dispatch_events(std::vector<pip_tcp_event_variant> & events);
     
     /// 发送数据包
     void send_packet(std::shared_ptr<pip_tcp_packet> packet);

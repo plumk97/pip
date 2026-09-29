@@ -47,10 +47,10 @@ public:
 class pip_tcp_written_event {
     
 public:
-    pip_uint16 written_len;
+    pip_uint32 written_len;
     bool has_push;
     
-    pip_tcp_written_event(pip_uint16 written_len, bool has_push) {
+    pip_tcp_written_event(pip_uint32 written_len, bool has_push) {
         this->written_len = written_len;
         this->has_push = has_push;
     }

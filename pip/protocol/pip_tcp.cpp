@@ -4,6 +4,8 @@
 //  Created by Plumk on 2021/3/11.
 //
 
+#include <random>
+
 #include "pip_tcp.h"
 #include "pip_tcp_manager.h"
 #include "pip_tcp_packet.h"
@@ -27,10 +29,49 @@ pip_uint32 increase_seq(pip_uint32 seq, pip_uint8 flags, pip_uint32 datalen) {
     return n;
 }
 
+pip_uint32 pip_tcp_generate_isn() {
+    thread_local std::mt19937 engine(std::random_device{}());
+    return (pip_uint32)engine();
+}
+
+pip_tcp_key::pip_tcp_key(std::shared_ptr<pip_ip_header> ip_header, pip_uint16 src_port, pip_uint16 dst_port) {
+    this->version = ip_header->version();
+    this->src_port = src_port;
+    this->dst_port = dst_port;
+
+    if (this->version == 4) {
+        pip_in_addr src = ip_header->ip_src();
+        pip_in_addr dst = ip_header->ip_dst();
+        memcpy(this->src_addr, &src, sizeof(src));
+        memcpy(this->dst_addr, &dst, sizeof(dst));
+    } else {
+        pip_in6_addr src = ip_header->ip6_src();
+        pip_in6_addr dst = ip_header->ip6_dst();
+        memcpy(this->src_addr, &src, sizeof(src));
+        memcpy(this->dst_addr, &dst, sizeof(dst));
+    }
+}
+
+bool pip_tcp_key::operator<(const pip_tcp_key & other) const {
+    if (this->version != other.version) {
+        return this->version < other.version;
+    }
+    if (this->src_port != other.src_port) {
+        return this->src_port < other.src_port;
+    }
+    if (this->dst_port != other.dst_port) {
+        return this->dst_port < other.dst_port;
+    }
+    int cmp = memcmp(this->src_addr, other.src_addr, sizeof(this->src_addr));
+    if (cmp != 0) {
+        return cmp < 0;
+    }
+    return memcmp(this->dst_addr, other.dst_addr, sizeof(this->dst_addr)) < 0;
+}
+
 pip_tcp::pip_tcp() {
     this->_packet_queue = std::make_shared<std::queue<std::shared_ptr<pip_tcp_packet>>>();
     
-    this->_iden = 0;
     this->_opp_seq = 0;
     this->_is_wait_push_ack = false;
     this->_fin_time = 0;

@@ -10,12 +10,20 @@
 
 void pip_udp::input(const void *bytes, std::shared_ptr<pip_ip_header> ip_header) {
     
+    if (ip_header->datalen() < sizeof(struct udphdr)) {
+        return;
+    }
+    
     struct udphdr *hdr = (struct udphdr *)bytes;
+    pip_uint16 ulen = ntohs(hdr->uh_ulen);
+    if (ulen < sizeof(struct udphdr) || ulen > ip_header->datalen()) {
+        return;
+    }
     
     pip_uint16 src_port = ntohs(hdr->uh_sport);
     pip_uint16 dst_port = ntohs(hdr->uh_dport);
     
-    pip_uint16 datalen = ntohs(hdr->uh_ulen) - sizeof(struct udphdr);
+    pip_uint16 datalen = ulen - sizeof(struct udphdr);
     void * data = (pip_uint8 *)bytes + sizeof(struct udphdr);
     
     pip_netif & netif = pip_netif::shared();

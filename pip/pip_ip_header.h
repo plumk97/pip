@@ -50,9 +50,6 @@ class pip_ip_header {
 public:
     pip_ip_header(const void * bytes);
     ~pip_ip_header();
-    
-    /// 生成32位标识
-    pip_uint32 generate_iden();
 
     pip_uint8 version() { return this->_version; }
     pip_uint8 protocol() { return this->_protocol; }

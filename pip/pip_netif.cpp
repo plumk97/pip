@@ -42,7 +42,40 @@ pip_netif & pip_netif::shared() {
     return netif;
 }
 
-void pip_netif::input(const void *buffer) {
+void pip_netif::input(const void *buffer, pip_uint32 len) {
+    if (buffer == nullptr || len < 1) {
+        return;
+    }
+    
+    pip_uint8 version = ((const pip_uint8 *)buffer)[0] >> 4;
+    if (version == 4) {
+        if (len < sizeof(struct ip)) {
+            return;
+        }
+        
+        const struct ip *hdr = (const struct ip *)buffer;
+        pip_uint32 headerlen = hdr->ip_hl * 4;
+        pip_uint32 total_len = ntohs(hdr->ip_len);
+        if (hdr->ip_hl < 5 || total_len < headerlen || total_len > len) {
+            return;
+        }
+        
+        /// - 不支持分片重组
+        if (ntohs(hdr->ip_off) & (IP_MF | IP_OFFMASK)) {
+            return;
+        }
+    } else if (version == 6) {
+        if (len < sizeof(struct ip6_hdr)) {
+            return;
+        }
+        
+        const struct ip6_hdr *hdr = (const struct ip6_hdr *)buffer;
+        if (sizeof(struct ip6_hdr) + ntohs(hdr->ip6_ctlun.ip6_un1.ip6_un1_plen) > len) {
+            return;
+        }
+    } else {
+        return;
+    }
     
     auto ip_header = std::make_shared<pip_ip_header>(buffer);
 #if PIP_DEBUG

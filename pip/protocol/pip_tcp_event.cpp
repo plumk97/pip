@@ -17,7 +17,11 @@ void pip_tcp::process_events() {
         events = std::move(this->_events);
         this->_events.clear();
     }
+    
+    this->dispatch_events(events);
+}
 
+void pip_tcp::dispatch_events(std::vector<pip_tcp_event_variant> & events) {
     for (auto& e : events) {
         std::visit([this](auto& ev){
             using T = std::decay_t<decltype(ev)>;
@@ -32,7 +36,7 @@ void pip_tcp::process_events() {
                     this->_connected_callback(shared_from_this());
                 }
             } else if constexpr (std::is_same_v<T, pip_tcp_closed_event>) {
-                pip_tcp_manager::shared().remove_tcp(this->iden());
+                pip_tcp_manager::shared().remove_tcp(this->_key, this);
                 
                 if (this->_closed_callback != nullptr) {
                     this->_closed_callback(shared_from_this(), ev.arg);

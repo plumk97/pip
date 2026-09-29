@@ -14,8 +14,8 @@
 #include <vector>
 
 #include "../pip_type.h"
+#include "pip_tcp.h"
 
-class pip_tcp;
 class pip_tcp_manager {
     pip_tcp_manager() {}
     ~pip_tcp_manager() {}
@@ -24,7 +24,7 @@ class pip_tcp_manager {
     pip_tcp_manager operator=(const pip_tcp_manager&) = delete;
     
 private:
-    std::map<pip_uint32, std::shared_ptr<pip_tcp>> _tcps;
+    std::map<pip_tcp_key, std::shared_ptr<pip_tcp>> _tcps;
     std::mutex _lock;
     
 public:
@@ -33,23 +33,28 @@ public:
         return manager;
     }
     
-    void add_tcp(pip_uint32 iden, std::shared_ptr<pip_tcp> tcp) {
+    void add_tcp(const pip_tcp_key & key, std::shared_ptr<pip_tcp> tcp) {
         std::lock_guard<std::mutex> guard(_lock);
-        _tcps[iden] = tcp;
+        _tcps[key] = tcp;
     }
     
-    std::shared_ptr<pip_tcp> fetch_tcp(pip_uint32 iden) {
+    std::shared_ptr<pip_tcp> fetch_tcp(const pip_tcp_key & key) {
         std::lock_guard<std::mutex> guard(_lock);
-        if (_tcps.find(iden) != _tcps.end()) {
-            return _tcps[iden];
+        auto it = _tcps.find(key);
+        if (it != _tcps.end()) {
+            return it->second;
         }
         
         return nullptr;
     }
     
-    void remove_tcp(pip_uint32 iden) {
+    /// 只有当前登记的对象就是 tcp 时才移除, 避免误删同一四元组上的新连接
+    void remove_tcp(const pip_tcp_key & key, const pip_tcp * tcp) {
         std::lock_guard<std::mutex> guard(_lock);
-        _tcps.erase(iden);
+        auto it = _tcps.find(key);
+        if (it != _tcps.end() && it->second.get() == tcp) {
+            _tcps.erase(it);
+        }
     }
     
     pip_uint32 size() {
