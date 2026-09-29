@@ -64,8 +64,25 @@
 
 ## Example
 
-example工程使用xcode打开运行. 该工程展示了以下操作
-1. tcp连接转发
-2. udp连接转发
+example 为 macOS 命令行程序, 使用 Xcode 打开 `example/example.xcodeproj` 编译, 需要 root 权限运行.
 
-注意转发需要根据地址指定对应的`network interface`否则将无法连接, 例如127.0.0.1对应的lo0.
+| 文件 | 说明 |
+| --- | --- |
+| `utun` | 创建 utun 网卡, 读写 IP 包 |
+| `tcp_proxy` | TCP 连接转发, 异步连接远端, 支持背压 |
+| `udp_proxy` | UDP 会话转发, 空闲 60 秒回收 |
+| `icmp_echo` | 直接应答 ping |
+| `options` | 命令行参数 |
+
+```
+# iperf3 测试: 连接 192.168.33.2 的流量被转发到 127.0.0.1 同端口
+iperf3 -s
+sudo ./example
+iperf3 -c 192.168.33.2
+ping 192.168.33.2
+
+# 透明代理: 发往 1.1.1.1 的流量经 pip 处理后从 en0 连接原目标
+sudo ./example --route 1.1.1.1/32 --redirect none --iface en0 -v
+```
+
+`./example -h` 查看全部参数. 出站 socket 会绑定 `--iface` 指定的网卡, 否则流量会被路由回 utun 形成环路, 例如转发到 127.0.0.1 需要绑定 lo0.
