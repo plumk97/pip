@@ -466,7 +466,7 @@ void pip_tcp::handle_receive(const void *data, pip_uint16 datalen) {
 }
 
 /// 处理Input
-void pip_tcp::handle_input(std::shared_ptr<pip_ip_header> ip_header, struct tcphdr *hdr, const void *bytes, pip_uint16 datalen) {
+void pip_tcp::handle_input(struct tcphdr *hdr, const void *bytes, pip_uint16 datalen) {
     if (this->_status == pip_tcp_status_released) {
         return;
     }

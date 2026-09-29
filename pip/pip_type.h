@@ -34,8 +34,8 @@
 
 #define PIP_UINT32_MAX 4294967295
 
-#define PIP_MAX(A, B) (A > B ? A : B)
-#define PIP_MIN(A, B) (A < B ? A : B)
+#define PIP_MAX(A, B) ((A) > (B) ? (A) : (B))
+#define PIP_MIN(A, B) ((A) < (B) ? (A) : (B))
 
 
 typedef uint8_t pip_uint8;

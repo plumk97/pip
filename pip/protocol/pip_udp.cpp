@@ -8,6 +8,11 @@
 #include "../pip_netif.h"
 #include "../pip_checksum.h"
 
+/// 计算结果为0时必须发送0xFFFF, 0表示未计算校验和 (RFC 768), IPv6 下不允许为0 (RFC 8200)
+static pip_uint16 udp_checksum(pip_uint16 sum) {
+    return sum == 0 ? 0xFFFF : htons(sum);
+}
+
 void pip_udp::input(const void *bytes, std::shared_ptr<pip_ip_header> ip_header) {
     
     if (ip_header->datalen() < sizeof(struct udphdr)) {
@@ -55,8 +60,7 @@ void pip_udp::output(const void *buffer, pip_uint16 buffer_len, const char * src
         pip_in_addr dst;
         inet_pton(AF_INET, dst_ip, &dst);
         
-        hdr->uh_sum = pip_inet_checksum_buf(udp_head_buf, IPPROTO_UDP, src, dst);
-        hdr->uh_sum = htons(hdr->uh_sum);
+        hdr->uh_sum = udp_checksum(pip_inet_checksum_buf(udp_head_buf, IPPROTO_UDP, src, dst));
         
         pip_netif::shared().output4(udp_head_buf, IPPROTO_UDP, src, dst);
         
@@ -65,8 +69,7 @@ void pip_udp::output(const void *buffer, pip_uint16 buffer_len, const char * src
         pip_in6_addr dst6;
         inet_pton(AF_INET6, dst_ip, &dst6);
         
-        hdr->uh_sum = pip_inet6_checksum_buf(udp_head_buf, IPPROTO_UDP, src6, dst6);
-        hdr->uh_sum = htons(hdr->uh_sum);
+        hdr->uh_sum = udp_checksum(pip_inet6_checksum_buf(udp_head_buf, IPPROTO_UDP, src6, dst6));
         
         pip_netif::shared().output6(udp_head_buf, IPPROTO_UDP, src6, dst6);
     }

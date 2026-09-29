@@ -222,9 +222,9 @@ public:
         return opp_mss; 
     }
 
-    pip_uint16 wind() { 
+    pip_uint32 wind() { 
         _mutex.lock();
-        pip_uint16 wind = this->_wind;
+        pip_uint32 wind = this->_wind;
         _mutex.unlock();
         return wind; 
     }
@@ -380,7 +380,7 @@ private:
     void handle_receive(const void * data, pip_uint16 datalen);
     
     /// 处理TCP数据包
-    void handle_input(std::shared_ptr<pip_ip_header> ip_header, struct tcphdr *hdr, const void *bytes, pip_uint16 datalen);
+    void handle_input(struct tcphdr *hdr, const void *bytes, pip_uint16 datalen);
     
 public:
     

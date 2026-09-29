@@ -23,6 +23,7 @@ pip_netif::pip_netif() {
     this->output_ip_data_callback = nullptr;
     this->new_tcp_connect_callback = nullptr;
     this->received_udp_data_callback = nullptr;
+    this->received_icmp_data_callback = nullptr;
     
     auto timer = std::thread([] {
         while (true) {
@@ -38,8 +39,9 @@ pip_netif::~pip_netif() {
 }
 
 pip_netif & pip_netif::shared() {
-    static pip_netif netif;
-    return netif;
+    // 不析构: 定时器线程在进程退出期间仍可能访问
+    static pip_netif * netif = new pip_netif();
+    return *netif;
 }
 
 void pip_netif::input(const void *buffer, pip_uint32 len) {
@@ -101,7 +103,15 @@ void pip_netif::input(const void *buffer, pip_uint32 len) {
             break;
             
         case IPPROTO_ICMP:
-            pip_icmp::input(data, ip_header);
+            if (ip_header->version() == 4) {
+                pip_icmp::input(data, ip_header);
+            }
+            break;
+            
+        case IPPROTO_ICMPV6:
+            if (ip_header->version() == 6) {
+                pip_icmp::input(data, ip_header);
+            }
             break;
             
         default:

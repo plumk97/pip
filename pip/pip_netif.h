@@ -7,6 +7,8 @@
 #ifndef pip_netif_hpp
 #define pip_netif_hpp
 
+#include <atomic>
+
 #include "pip_type.h"
 #include "pip_buf.h"
 #include "pip_ip_header.h"
@@ -38,7 +40,7 @@ typedef void (*pip_netif_new_tcp_connect_callback) (pip_netif & netif, std::shar
 /// @param version IP协议版本 4 || 6
 typedef void (*pip_netif_received_udp_data_callback) (pip_netif & netif, void * buffer, pip_uint16 buffer_len, const char * src_ip, pip_uint16 src_port, const char * dst_ip, pip_uint16 dst_port, pip_uint8 version);
 
-// 接受到ICMP数据
+// 接受到ICMP数据 (IPv4 为 ICMP, IPv6 为 ICMPv6)
 typedef void (*pip_netif_received_icmp_data_callback) (pip_netif & netif, void * buffer, pip_uint16 buffer_len, const char * src_ip, const char * dst_ip, pip_uint8 ttl);
 
 
@@ -47,7 +49,7 @@ class pip_netif {
     ~pip_netif();
     
     pip_netif(const pip_netif&) = delete;
-    pip_netif operator=(const pip_netif&) = delete;
+    pip_netif & operator=(const pip_netif&) = delete;
     
     
 public:

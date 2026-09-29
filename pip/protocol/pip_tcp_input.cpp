@@ -83,6 +83,6 @@ void pip_tcp::input(const void * bytes, std::shared_ptr<pip_ip_header> ip_header
     pip_debug_output_tcp(tcp, hdr, datalen, "tcp_input");
 #endif
     std::unique_lock<std::mutex> lock(tcp->_mutex);
-    tcp->handle_input(ip_header, hdr, bytes, datalen);
+    tcp->handle_input(hdr, bytes, datalen);
     tcp->finish(lock);
 }

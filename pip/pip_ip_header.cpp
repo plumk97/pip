@@ -19,13 +19,6 @@ pip_ip_header::pip_ip_header(const void* bytes) {
 
         this->_ip_src = hdr->ip_src;
         this->_ip_dst = hdr->ip_dst;
-
-        this->_src_str = (char*)calloc(INET_ADDRSTRLEN, sizeof(char));
-        this->_dst_str = (char*)calloc(INET_ADDRSTRLEN, sizeof(char));
-
-        inet_ntop(AF_INET, &this->_ip_src, this->_src_str, INET_ADDRSTRLEN);
-        inet_ntop(AF_INET, &this->_ip_dst, this->_dst_str, INET_ADDRSTRLEN);
-
     }
     else {
 
@@ -40,26 +33,27 @@ pip_ip_header::pip_ip_header(const void* bytes) {
 
         this->_ip6_src = hdr->ip6_src;
         this->_ip6_dst = hdr->ip6_dst;
-
-
-        this->_src_str = (char*)calloc(INET6_ADDRSTRLEN, sizeof(char));
-        this->_dst_str = (char*)calloc(INET6_ADDRSTRLEN, sizeof(char));
-
-        inet_ntop(AF_INET6, &this->_ip6_src, this->_src_str, INET6_ADDRSTRLEN);
-        inet_ntop(AF_INET6, &this->_ip6_dst, this->_dst_str, INET6_ADDRSTRLEN);
     }
 }
 
-pip_ip_header::~pip_ip_header() {
-    
-    if (this->_src_str != nullptr) {
-        free(this->_src_str);
-        this->_src_str = nullptr;
-    }
-    
-    if (this->_dst_str != nullptr) {
-        free(this->_dst_str);
-        this->_dst_str = nullptr;
-    }
+const char * pip_ip_header::src_str() {
+    std::call_once(this->_src_str_once, [this] {
+        if (this->_version == 4) {
+            inet_ntop(AF_INET, &this->_ip_src, this->_src_str, sizeof(this->_src_str));
+        } else {
+            inet_ntop(AF_INET6, &this->_ip6_src, this->_src_str, sizeof(this->_src_str));
+        }
+    });
+    return this->_src_str;
 }
 
+const char * pip_ip_header::dst_str() {
+    std::call_once(this->_dst_str_once, [this] {
+        if (this->_version == 4) {
+            inet_ntop(AF_INET, &this->_ip_dst, this->_dst_str, sizeof(this->_dst_str));
+        } else {
+            inet_ntop(AF_INET6, &this->_ip6_dst, this->_dst_str, sizeof(this->_dst_str));
+        }
+    });
+    return this->_dst_str;
+}

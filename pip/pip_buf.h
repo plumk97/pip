@@ -8,7 +8,9 @@
 #define pip_buf_hpp
 
 #include "pip_type.h"
+#include <cstring>
 #include <memory>
+#include <stdexcept>
 
 class pip_buf : public std::enable_shared_from_this<pip_buf> {
     void* _payload = nullptr;

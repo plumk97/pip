@@ -21,7 +21,7 @@ class pip_tcp_manager {
     ~pip_tcp_manager() {}
     
     pip_tcp_manager(const pip_tcp_manager&) = delete;
-    pip_tcp_manager operator=(const pip_tcp_manager&) = delete;
+    pip_tcp_manager & operator=(const pip_tcp_manager&) = delete;
     
 private:
     std::map<pip_tcp_key, std::shared_ptr<pip_tcp>> _tcps;
@@ -29,8 +29,9 @@ private:
     
 public:
     static pip_tcp_manager & shared() {
-        static pip_tcp_manager manager;
-        return manager;
+        // 不析构: 定时器线程在进程退出期间仍可能访问
+        static pip_tcp_manager * manager = new pip_tcp_manager();
+        return *manager;
     }
     
     /// 不存在时加入并返回 tcp, 已存在 (并发创建) 时返回已有的连接
