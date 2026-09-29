@@ -35,6 +35,11 @@ void pip_tcp::input(const void * bytes, std::shared_ptr<pip_ip_header> ip_header
         
         if (!(hdr->th_flags & TH_SYN) || pip_tcp_manager::shared().size() >= PIP_TCP_MAX_CONNS) {
             
+            // 不能对 RST 回复 RST
+            if (hdr->th_flags & TH_RST) {
+                return;
+            }
+            
             // 不存在的连接 直接返回RST
             tcp = std::make_shared<pip_tcp>();
             tcp->_key = key;
@@ -43,10 +48,17 @@ void pip_tcp::input(const void * bytes, std::shared_ptr<pip_ip_header> ip_header
             tcp->_src_port = sport;
             tcp->_dst_port = dport;
             
-            tcp->_seq = ntohl(hdr->th_ack);
-            tcp->_ack = increase_seq(ntohl(hdr->th_seq), hdr->th_flags, datalen);
+            pip_uint8 flags = TH_RST;
+            if (hdr->th_flags & TH_ACK) {
+                tcp->_seq = ntohl(hdr->th_ack);
+                tcp->_ack = 0;
+            } else {
+                tcp->_seq = 0;
+                tcp->_ack = increase_seq(ntohl(hdr->th_seq), hdr->th_flags, datalen);
+                flags |= TH_ACK;
+            }
             
-            auto packet = tcp->create_tcp_packet(TH_RST | TH_ACK, nullptr, nullptr);
+            auto packet = tcp->create_tcp_packet(flags, nullptr, nullptr);
             tcp->send_packet(packet);
             tcp->release();
             

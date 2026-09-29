@@ -88,6 +88,9 @@ pip_tcp::pip_tcp() {
     this->_wind_shift = PIP_TCP_WIND_SHIFT;
     this->_opp_wind = 0;
     this->_opp_wind_shift = 0;
+    this->_dup_ack_count = 0;
+    this->_in_recovery = false;
+    this->_recover = 0;
     this->_arg = nullptr;
     
     this->_connected_callback = nullptr;

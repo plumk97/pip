@@ -5,6 +5,8 @@
 //  Copyright © 2026 Plumk. All rights reserved.
 //
 
+#include <algorithm>
+
 #include "pip_tcp.h"
 #include "pip_tcp_manager.h"
 
@@ -27,7 +29,10 @@ void pip_tcp::_timer_tick(pip_uint64 now) {
     }
     
     auto packet = this->_packet_queue->front();
-    if (now - packet->send_time() < 1000) {
+    
+    /// 超时时间从1秒开始每次翻倍, 最大4秒
+    pip_uint64 rto = std::min<pip_uint64>(1000ULL << (packet->send_count() - 1), 4000);
+    if (now - packet->send_time() < rto) {
         return;
     }
     
@@ -35,7 +40,7 @@ void pip_tcp::_timer_tick(pip_uint64 now) {
     if (packet->send_count() > 5) {
         this->_reset();
     } else {
-        this->resend_packet(packet);
+        this->retransmit_front();
     }
     
 }

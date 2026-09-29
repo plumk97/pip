@@ -111,6 +111,15 @@ class pip_tcp : public std::enable_shared_from_this<pip_tcp> {
     /// 对方窗口缩放位移位数
     pip_uint8 _opp_wind_shift;
     
+    /// 连续重复ACK次数
+    pip_uint8 _dup_ack_count;
+    
+    /// 是否处于丢包恢复中
+    bool _in_recovery;
+    
+    /// 进入恢复时的发送序号, ACK 到达该序号后退出恢复
+    pip_uint32 _recover;
+    
     /// 外部使用-用于区分
     void * _arg;
     
@@ -330,6 +339,12 @@ private:
     
     /// 重新发送数据包
     void resend_packet(std::shared_ptr<pip_tcp_packet> packet);
+    
+    /// 重传队首数据包并进入丢包恢复
+    void retransmit_front();
+    
+    /// 最早未被确认的序号
+    pip_uint32 snd_una();
     
     /// 发送确认ACK
     void send_ack();

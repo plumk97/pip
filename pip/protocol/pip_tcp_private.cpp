@@ -10,12 +10,14 @@
 
 
 std::shared_ptr<pip_tcp_packet> pip_tcp::create_tcp_packet(pip_uint8 flags, std::shared_ptr<pip_buf> option_buf, std::shared_ptr<pip_buf> payload_buf) {
+    // SYN 包的窗口不做缩放 (RFC 7323)
+    pip_uint32 wind = (flags & TH_SYN) ? PIP_MIN(this->_wind, (pip_uint32)0xFFFF) : this->_wind >> this->_wind_shift;
     return std::make_shared<pip_tcp_packet>(this->_ip_header,
                                             this->_dst_port,
                                             this->_src_port,
                                             this->_seq,
                                             this->_ack,
-                                            this->_wind >> this->_wind_shift,
+                                            wind,
                                             flags,
                                             option_buf,
                                             payload_buf);
@@ -79,7 +81,7 @@ pip_uint32 pip_tcp::_write(const void *bytes, pip_uint32 len, bool is_copy) {
     pip_uint32 offset = 0;
     while (offset < len && this->_opp_wind > 0) {
         
-        pip_uint16 write_len = this->_opp_mss;
+        pip_uint16 write_len = PIP_MIN(this->_mss, this->_opp_mss);
         
         /// 获取小于等于mss的数据长度
         if (offset + write_len > len) {
@@ -131,10 +133,13 @@ void pip_tcp::_received(pip_uint16 len) {
     if (this->_status != pip_tcp_status_established) {
         return;
     }
-    this->_wind = PIP_MIN(this->_wind + len, PIP_TCP_WIND << PIP_TCP_WIND_SHIFT);
+    pip_uint32 old_wind = this->_wind;
+    pip_uint32 max_wind = (pip_uint32)PIP_TCP_WIND << this->_wind_shift;
+    this->_wind = PIP_MIN(this->_wind + len, max_wind);
     
     // 判断当前是否是最后一次接受的包 如果是直接回复 否等待其它包一起回复
-    if (this->_ack - len == this->_opp_seq || this->_wind - len <= 0) {
+    // 之前窗口不足一个 mss 时对方可能已被阻塞, 需要立即通告新窗口
+    if (this->_ack - len == this->_opp_seq || old_wind < this->_mss) {
         this->send_ack();
     }
 }
@@ -179,6 +184,24 @@ pip_tcp::resend_packet(std::shared_ptr<pip_tcp_packet> packet) {
 #endif
 }
 
+void pip_tcp::retransmit_front() {
+    if (this->_packet_queue->empty()) {
+        return;
+    }
+    
+    this->resend_packet(this->_packet_queue->front());
+    this->_in_recovery = true;
+    this->_recover = this->_seq;
+    this->_dup_ack_count = 0;
+}
+
+pip_uint32 pip_tcp::snd_una() {
+    if (this->_packet_queue->empty()) {
+        return this->_seq;
+    }
+    return ntohl(this->_packet_queue->front()->hdr()->th_seq);
+}
+
 void pip_tcp::send_ack() {
     auto packet = this->create_tcp_packet(TH_ACK, nullptr, nullptr);
     this->send_packet(packet);
@@ -191,6 +214,7 @@ void pip_tcp::handle_ack(pip_uint32 ack, bool is_update_wind) {
     bool has_syn = false;
     bool has_fin = false;
     bool has_push = false;
+    bool has_popped = false;
     pip_uint32 written_length = 0;
     
     while (!this->_packet_queue->empty()) {
@@ -210,6 +234,7 @@ void pip_tcp::handle_ack(pip_uint32 ack, bool is_update_wind) {
             break;
         }
         this->_packet_queue->pop();
+        has_popped = true;
         
         if (hdr->th_flags & TH_SYN) {
             has_syn = true;
@@ -235,6 +260,19 @@ void pip_tcp::handle_ack(pip_uint32 ack, bool is_update_wind) {
     printf("\n\n");
 #endif
     
+    if (has_popped) {
+        this->_dup_ack_count = 0;
+        
+        if (this->_in_recovery) {
+            if (is_before_seq(this->_recover, ack)) {
+                this->_in_recovery = false;
+            } else if (!this->_packet_queue->empty()) {
+                // 部分确认: 下一个包大概率也已丢失, 立即重传而不是等待超时
+                this->resend_packet(this->_packet_queue->front());
+            }
+        }
+    }
+    
     if (has_syn) {
         this->_status = pip_tcp_status_established;
         this->_events.push_back(pip_tcp_connected_event());
@@ -259,6 +297,15 @@ void pip_tcp::handle_ack(pip_uint32 ack, bool is_update_wind) {
 
 void pip_tcp::handle_syn(const void * options, pip_uint16 optionlen) {
     this->_status = pip_tcp_status_establishing;
+    
+    // IP头 + TCP头
+    bool is_ipv4 = this->_ip_header->version() == 4;
+    this->_mss = PIP_MTU - (is_ipv4 ? 40 : 60);
+    
+    // 对方未携带 MSS 选项时的默认值 (RFC 9293)
+    this->_opp_mss = is_ipv4 ? 536 : 1220;
+    
+    bool has_wind_shift = false;
     
 #if PIP_DEBUG
     printf("[tcp_handle_syn]:\n");
@@ -322,7 +369,8 @@ void pip_tcp::handle_syn(const void * options, pip_uint16 optionlen) {
                     pip_uint8 shift = 0;
                     if (value_len >= sizeof(pip_uint8)) {
                         memcpy(&shift, bytes + offset, sizeof(pip_uint8));
-                        this->_opp_wind_shift = shift;
+                        this->_opp_wind_shift = PIP_MIN(shift, (pip_uint8)14);
+                        has_wind_shift = true;
                     }
                     break;
                 }
@@ -339,15 +387,21 @@ void pip_tcp::handle_syn(const void * options, pip_uint16 optionlen) {
 #if PIP_DEBUG
     printf("\n\n");
 #endif
-    auto option_buf = std::make_shared<pip_buf>(8);
+    // 双方都携带 window scale 选项才启用缩放 (RFC 7323)
+    if (!has_wind_shift) {
+        this->_opp_wind_shift = 0;
+        this->_wind_shift = 0;
+        this->_wind = PIP_TCP_WIND;
+    }
+    
+    auto option_buf = std::make_shared<pip_buf>(has_wind_shift ? 8 : 4);
     pip_uint8 * optionBuffer = (pip_uint8 *)option_buf->payload();
-    memset(optionBuffer, 0, 4);
     pip_uint8 offset = 0;
     if (true) {
         // mss
         pip_uint8 kind = 2;
         pip_uint8 len = 4;
-        pip_uint16 value = htons(PIP_MIN(this->_mss, this->_opp_mss));
+        pip_uint16 value = htons(this->_mss);
 
         memcpy(optionBuffer, &kind, 1);
         memcpy(optionBuffer + 1, &len, 1);
@@ -356,17 +410,19 @@ void pip_tcp::handle_syn(const void * options, pip_uint16 optionlen) {
         offset += len;
     }
     
-    if (true) {
-        // window scale
+    if (has_wind_shift) {
+        // nop + window scale
+        pip_uint8 nop = 1;
         pip_uint8 kind = 3;
         pip_uint8 len = 3;
         pip_uint8 value = this->_wind_shift;
 
-        memcpy(optionBuffer + offset, &kind, 1);
-        memcpy(optionBuffer + offset + 1, &len, 1);
-        memcpy(optionBuffer + offset + 2, &value, 1);
+        memcpy(optionBuffer + offset, &nop, 1);
+        memcpy(optionBuffer + offset + 1, &kind, 1);
+        memcpy(optionBuffer + offset + 2, &len, 1);
+        memcpy(optionBuffer + offset + 3, &value, 1);
         
-        offset += len;
+        offset += len + 1;
     }
     
     auto packet = this->create_tcp_packet(TH_SYN | TH_ACK, option_buf, nullptr);
@@ -429,35 +485,84 @@ void pip_tcp::handle_input(std::shared_ptr<pip_ip_header> ip_header, struct tcph
         return;
     }
     
-    if (hdr->th_flags == TH_ACK && ntohl(hdr->th_seq) == this->_ack - 1) {
+    pip_uint32 seg_seq = ntohl(hdr->th_seq);
+    pip_uint32 seg_ack = ntohl(hdr->th_ack);
+    
+    if ((hdr->th_flags & TH_SYN) && this->_status != pip_tcp_status_none) {
+        if (this->_status != pip_tcp_status_wait_establishing && this->_status != pip_tcp_status_establishing) {
+            // 已同步状态下收到 SYN, 回复 challenge ACK (RFC 5961)
+            this->send_ack();
+        }
+        // 握手阶段的重复 SYN 忽略, SYN-ACK 由定时器重传
+        return;
+    }
+    
+    if (hdr->th_flags == TH_ACK && seg_seq == this->_ack - 1) {
         // keep-alive 包 直接回复
         this->send_ack();
         return;
     }
     
-    if (this->_ack > 0) {
-        if (ntohl(hdr->th_seq) != this->_ack) {
-            /// 当前数据包seq与之前的ack对不上 产生了丢包 回复之前的ack 等待重传
-            this->send_ack();
-            return;
-        }
+    if (this->_status != pip_tcp_status_none && seg_seq != this->_ack) {
+        /// 当前数据包seq与之前的ack对不上 产生了丢包 回复之前的ack 等待重传
+        this->send_ack();
+        return;
     }
     
-    this->_opp_seq = ntohl(hdr->th_seq);
-    this->_ack = increase_seq(ntohl(hdr->th_seq), hdr->th_flags, datalen);
+    if (datalen > this->_wind) {
+        /// 超出接收窗口 (包括零窗口探测) 回复当前窗口
+        this->send_ack();
+        return;
+    }
+    
+    if ((hdr->th_flags & TH_ACK) && !is_before_seq(seg_ack, this->_seq)) {
+        /// 确认了尚未发送的数据
+        this->send_ack();
+        return;
+    }
+    
+    this->_opp_seq = seg_seq;
+    this->_ack = increase_seq(seg_seq, hdr->th_flags, datalen);
     
     bool is_update_wind = false;
-    if (this->_opp_wind <= 0 && this->_is_wait_push_ack == false) {
-        is_update_wind = true;
+    if (hdr->th_flags & TH_ACK) {
+        pip_uint32 una = this->snd_una();
+        
+        // 过期的 ACK 不更新窗口
+        if (is_before_seq(una, seg_ack)) {
+            pip_uint32 old_wind = this->_opp_wind;
+            
+            // 对方通告的窗口从 seg_ack 开始计算, 需要扣除在途数据
+            pip_uint32 wnd = pip_uint32(ntohs(hdr->th_win)) << this->_opp_wind_shift;
+            pip_uint32 in_flight = this->_seq - seg_ack;
+            this->_opp_wind = wnd > in_flight ? wnd - in_flight : 0;
+            
+            is_update_wind = old_wind == 0 && this->_opp_wind > 0 && this->_is_wait_push_ack == false;
+            
+            bool is_dup_ack = seg_ack == una &&
+                              datalen == 0 &&
+                              !(hdr->th_flags & (TH_SYN | TH_FIN)) &&
+                              !this->_packet_queue->empty() &&
+                              this->_opp_wind == old_wind;
+            if (is_dup_ack) {
+                this->_dup_ack_count += 1;
+                if (this->_dup_ack_count == 3 && !this->_in_recovery) {
+                    // 快速重传
+                    this->retransmit_front();
+                }
+            }
+        }
+    } else if (hdr->th_flags & TH_SYN) {
+        // SYN 包的窗口不缩放
+        this->_opp_wind = ntohs(hdr->th_win);
     }
-    this->_opp_wind = pip_uint32(ntohs(hdr->th_win)) << this->_opp_wind_shift;
     
     if (hdr->th_flags & TH_PUSH || datalen > 0) {
         this->handle_receive((pip_uint8 *)bytes + hdr->th_off * 4, datalen);
     }
     
     if (hdr->th_flags & TH_ACK) {
-        this->handle_ack(ntohl(hdr->th_ack), is_update_wind);
+        this->handle_ack(seg_ack, is_update_wind);
     }
     
     if (this->_status == pip_tcp_status_released) {
@@ -465,35 +570,10 @@ void pip_tcp::handle_input(std::shared_ptr<pip_ip_header> ip_header, struct tcph
         return;
     }
     
-    if (hdr->th_flags & TH_SYN) {
-        
-        switch (this->_status) {
-            case pip_tcp_status_none: {
-                // 建立连接
-                this->_status = pip_tcp_status_wait_establishing;
-                this->_events.push_back(pip_tcp_connect_event(bytes, hdr->th_off * 4));
-                break;
-            }
-                
-            case pip_tcp_status_wait_establishing:
-            case pip_tcp_status_establishing:
-                // 重复忽略
-                break;
-                
-            case pip_tcp_status_established: {
-                // 已连接 重新回复ack
-                this->handle_syn(nullptr, 0);
-                break;
-            }
-
-            default: {
-                // 其他状态reset
-                this->_reset();
-                break;
-            }
-        }
-        
-        
+    if ((hdr->th_flags & TH_SYN) && this->_status == pip_tcp_status_none) {
+        // 建立连接
+        this->_status = pip_tcp_status_wait_establishing;
+        this->_events.push_back(pip_tcp_connect_event(bytes, hdr->th_off * 4));
     }
     
     if (hdr->th_flags & TH_FIN) {
