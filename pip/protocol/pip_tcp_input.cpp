@@ -58,9 +58,11 @@ void pip_tcp::input(const void * bytes, std::shared_ptr<pip_ip_header> ip_header
                 flags |= TH_ACK;
             }
             
+            std::unique_lock<std::mutex> lock(tcp->_mutex);
             auto packet = tcp->create_tcp_packet(flags, nullptr, nullptr);
             tcp->send_packet(packet);
             tcp->release();
+            tcp->finish(lock);
             
             return;
         }
@@ -73,15 +75,14 @@ void pip_tcp::input(const void * bytes, std::shared_ptr<pip_ip_header> ip_header
 
         tcp->_src_port = sport;
         tcp->_dst_port = dport;
-        pip_tcp_manager::shared().add_tcp(key, tcp);
+        tcp = pip_tcp_manager::shared().add_tcp_if_absent(key, tcp);
         
     }
 
 #if PIP_DEBUG
     pip_debug_output_tcp(tcp, hdr, datalen, "tcp_input");
 #endif
-    tcp->_mutex.lock();
+    std::unique_lock<std::mutex> lock(tcp->_mutex);
     tcp->handle_input(ip_header, hdr, bytes, datalen);
-    tcp->_mutex.unlock();
-    tcp->process_events();
+    tcp->finish(lock);
 }

@@ -15,6 +15,7 @@ class pip_netif;
 class pip_tcp;
 
 /// 输出IP包数据
+/// buf 链仅在回调期间有效, 回调返回后会被拆开, 需要异步发送时请在回调内复制数据
 /// @param netif _
 /// @param buf IP包数据
 typedef void (*pip_netif_output_ip_data_callback) (pip_netif & netif, std::shared_ptr<pip_buf> buf);

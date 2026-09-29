@@ -10,54 +10,50 @@
 
 
 void pip_tcp::connected(const void *handshake_data) {
-    _mutex.lock();
+    std::unique_lock<std::mutex> lock(_mutex);
     _connected(handshake_data);
-    _mutex.unlock();
+    finish(lock);
 }
 
 void pip_tcp::close() {
-    _mutex.lock();
+    std::unique_lock<std::mutex> lock(_mutex);
     _arg = nullptr;
     _connected_callback = nullptr;
     _closed_callback = nullptr;
     _received_callback = nullptr;
     _written_callback = nullptr;
     _close();
-    _mutex.unlock();
-    this->process_events();
+    finish(lock);
 }
 
 void pip_tcp::reset() {
-    _mutex.lock();
+    std::unique_lock<std::mutex> lock(_mutex);
     _arg = nullptr;
     _connected_callback = nullptr;
     _closed_callback = nullptr;
     _received_callback = nullptr;
     _written_callback = nullptr;
     _reset();
-    _mutex.unlock();
-    this->process_events();
+    finish(lock);
 }
 
 
 pip_uint32 pip_tcp::write(const void *bytes, pip_uint32 len, bool is_copy) {
-    _mutex.lock();
+    std::unique_lock<std::mutex> lock(_mutex);
     pip_uint32 written = _write(bytes, len, is_copy);
-    _mutex.unlock();
+    finish(lock);
     return written;
 }
 
 void pip_tcp::received(pip_uint16 len) {
-    _mutex.lock();
+    std::unique_lock<std::mutex> lock(_mutex);
     _received(len);
-    _mutex.unlock();
+    finish(lock);
 }
 
 pip_uint32 pip_tcp::maximum_write_length() {
-    _mutex.lock();
-    pip_uint32 ret = this->_maximum_write_length();
-    _mutex.unlock();
-    return ret;
+    std::lock_guard<std::mutex> lock(_mutex);
+    return this->_maximum_write_length();
 }
 
 

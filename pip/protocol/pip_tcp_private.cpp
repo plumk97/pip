@@ -157,11 +157,7 @@ void pip_tcp::send_packet(std::shared_ptr<pip_tcp_packet> packet) {
     tcphdr * hdr = packet->hdr();
     pip_uint16 datalen = packet->payload_len();
     
-    if (this->_ip_header->version() == 4) {
-        pip_netif::shared().output4(packet->head_buf(), IPPROTO_TCP, this->_ip_header->ip_dst(), this->_ip_header->ip_src());
-    } else {
-        pip_netif::shared().output6(packet->head_buf(), IPPROTO_TCP, this->_ip_header->ip6_dst(), this->_ip_header->ip6_src());
-    }
+    this->_outputs.push_back(packet);
     
     this->_seq = increase_seq(this->_seq, hdr->th_flags, datalen);
     
@@ -173,11 +169,7 @@ void pip_tcp::send_packet(std::shared_ptr<pip_tcp_packet> packet) {
 void
 pip_tcp::resend_packet(std::shared_ptr<pip_tcp_packet> packet) {
     packet->sended();
-    if (this->_ip_header->version() == 4) {
-        pip_netif::shared().output4(packet->head_buf(), IPPROTO_TCP, this->_ip_header->ip_dst(), this->_ip_header->ip_src());
-    } else {
-        pip_netif::shared().output6(packet->head_buf(), IPPROTO_TCP, this->_ip_header->ip6_dst(), this->_ip_header->ip6_src());
-    }
+    this->_outputs.push_back(packet);
     
 #if PIP_DEBUG
     pip_debug_output_tcp(shared_from_this(), packet, "tcp_resend");

@@ -56,15 +56,8 @@ void pip_tcp::timer_tick() {
     auto tcps = manager.tcp_snapshot();
     for (auto & tcp : tcps) {
         
-        tcp->_mutex.lock();
-        // 之前排队的事件留给 input 线程处理, received 事件指向的是 input 的缓冲区
-        size_t pending = tcp->_events.size();
+        std::unique_lock<std::mutex> lock(tcp->_mutex);
         tcp->_timer_tick(cur_time);
-        std::vector<pip_tcp_event_variant> events(std::make_move_iterator(tcp->_events.begin() + pending),
-                                                  std::make_move_iterator(tcp->_events.end()));
-        tcp->_events.erase(tcp->_events.begin() + pending, tcp->_events.end());
-        tcp->_mutex.unlock();
-        
-        tcp->dispatch_events(events);
+        tcp->finish(lock);
     }
 }

@@ -33,9 +33,11 @@ public:
         return manager;
     }
     
-    void add_tcp(const pip_tcp_key & key, std::shared_ptr<pip_tcp> tcp) {
+    /// 不存在时加入并返回 tcp, 已存在 (并发创建) 时返回已有的连接
+    std::shared_ptr<pip_tcp> add_tcp_if_absent(const pip_tcp_key & key, std::shared_ptr<pip_tcp> tcp) {
         std::lock_guard<std::mutex> guard(_lock);
-        _tcps[key] = tcp;
+        auto result = _tcps.emplace(key, tcp);
+        return result.first->second;
     }
     
     std::shared_ptr<pip_tcp> fetch_tcp(const pip_tcp_key & key) {

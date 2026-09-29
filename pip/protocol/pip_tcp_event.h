@@ -10,6 +10,7 @@
 
 #include "../pip_type.h"
 #include <vector>
+#include <variant>
 
 class pip_tcp_connect_event {
 public:
@@ -59,16 +60,30 @@ public:
 class pip_tcp_received_event {
     
 public:
+    /// 默认指向 input 的缓冲区, 仅在 input 返回前有效
     const void *data;
     pip_uint32 data_len;
+    
+    /// 交给其它线程派发时复制的数据
+    std::vector<pip_uint8> owned;
     
     pip_tcp_received_event(const void *buffer, pip_uint32 buffer_len) {
         this->data = buffer;
         this->data_len = buffer_len;
     }
+    
+    /// 复制数据, 使事件脱离 input 缓冲区的生命周期
+    void retain() {
+        if (this->data == nullptr || this->data_len == 0 || !this->owned.empty()) {
+            return;
+        }
+        const pip_uint8 * ptr = (const pip_uint8 *)this->data;
+        this->owned.assign(ptr, ptr + this->data_len);
+        this->data = nullptr;
+    }
 
     const void * buffer() const {
-        return this->data;
+        return this->owned.empty() ? this->data : this->owned.data();
     }
 
     pip_uint32 buffer_len() const {

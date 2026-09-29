@@ -284,8 +284,18 @@ private:
     
     std::mutex _mutex;
     
-    ///
+    /// 待派发的事件 由 _mutex 保护
     std::vector<pip_tcp_event_variant> _events;
+    
+    /// 是否有线程正在派发事件 由 _mutex 保护
+    bool _dispatching = false;
+    
+    /// 待输出的数据包 由 _mutex 保护
+    std::vector<std::shared_ptr<pip_tcp_packet>> _outputs;
+    
+    /// 输出数据包时持有 同一数据包的重传会修改 buf 链, 需要串行
+    /// 允许输出回调中重入 pip_tcp 接口
+    std::recursive_mutex _output_mutex;
     
     /// 释放资源
     void release();
@@ -332,11 +342,17 @@ private:
     void _timer_tick(pip_uint64 now);
     
 private:
-    /// 处理事件
-    void process_events();
+    /// 结束临界区: 释放 lock 后输出数据包并派发事件
+    /// 所有持有 _mutex 修改状态的入口都必须以此结束
+    void finish(std::unique_lock<std::mutex> & lock);
+    
+    /// 派发事件 调用时不能持有 _mutex
     void dispatch_events(std::vector<pip_tcp_event_variant> & events);
     
-    /// 发送数据包
+    /// 输出数据包 调用时不能持有 _mutex
+    void flush_outputs(std::vector<std::shared_ptr<pip_tcp_packet>> & outputs);
+    
+    /// 发送数据包 (加入待输出队列)
     void send_packet(std::shared_ptr<pip_tcp_packet> packet);
     
     /// 重新发送数据包
