@@ -71,9 +71,6 @@ class pip_tcp : public std::enable_shared_from_this<pip_tcp> {
     /// 对方当前的seq
     pip_uint32 _opp_seq;
     
-    /// 当前是否等待确认PUSH包
-    bool _is_wait_push_ack;
-    
     /// 主动关闭时间 定期检查 防止客户端不响应ACK 导致资源占用
     pip_uint64 _fin_time;
     
@@ -112,6 +109,9 @@ class pip_tcp : public std::enable_shared_from_this<pip_tcp> {
     
     /// 对方窗口缩放位移位数
     pip_uint8 _opp_wind_shift;
+    
+    /// 对方最近一次通告的窗口 (已缩放), 用于判断重复 ACK
+    pip_uint32 _opp_adv_wind;
     
     /// 连续重复ACK次数
     pip_uint8 _dup_ack_count;
@@ -152,13 +152,6 @@ public:
         return opp_seq; 
     }
     
-    bool is_wait_push_ack() { 
-        _mutex.lock();
-        bool is_wait = this->_is_wait_push_ack;
-        _mutex.unlock();
-        return is_wait; 
-    }
-
     pip_uint64 fin_time() { 
         _mutex.lock();
         pip_uint64 fin_time = this->_fin_time;

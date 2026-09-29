@@ -73,7 +73,6 @@ pip_tcp::pip_tcp() {
     this->_packet_queue = std::make_shared<std::queue<std::shared_ptr<pip_tcp_packet>>>();
     
     this->_opp_seq = 0;
-    this->_is_wait_push_ack = false;
     this->_fin_time = 0;
     
     this->_ip_header = nullptr;
@@ -88,6 +87,7 @@ pip_tcp::pip_tcp() {
     this->_wind_shift = PIP_TCP_WIND_SHIFT;
     this->_opp_wind = 0;
     this->_opp_wind_shift = 0;
+    this->_opp_adv_wind = 0;
     this->_dup_ack_count = 0;
     this->_in_recovery = false;
     this->_recover = 0;

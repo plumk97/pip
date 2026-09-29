@@ -75,6 +75,11 @@ bool utun::open(const std::string & local_ip, const std::string & peer_ip, int m
         return false;
     }
     
+    // pip 会按对方窗口连续发送, 缓冲区太小时突发数据会被丢弃; 设置失败不影响使用
+    int bufsize = 4 * 1024 * 1024;
+    setsockopt(fd, SOL_SOCKET, SO_SNDBUF, &bufsize, sizeof(bufsize));
+    setsockopt(fd, SOL_SOCKET, SO_RCVBUF, &bufsize, sizeof(bufsize));
+    
     _fd = fd;
     _name = ifname;
     
@@ -125,5 +130,17 @@ bool utun::write(const std::shared_ptr<pip_buf> & buf) {
         }
     }
     
-    return writev(_fd, iov, count) >= 0;
+    // 内核队列满时短暂等待重试, 形成背压; 超过约 20ms 仍失败则丢弃, 由 TCP 重传
+    for (int attempt = 0; attempt < 200; ++attempt) {
+        if (writev(_fd, iov, count) >= 0) {
+            return true;
+        }
+        if (errno != ENOBUFS && errno != EAGAIN && errno != EINTR) {
+            break;
+        }
+        if (errno != EINTR) {
+            usleep(100);
+        }
+    }
+    return false;
 }

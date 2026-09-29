@@ -105,8 +105,6 @@ pip_uint32 pip_tcp::_write(const void *bytes, pip_uint32 len, bool is_copy) {
         
         if (is_push) {
             packet = this->create_tcp_packet(TH_PUSH | TH_ACK, nullptr, payload_buf);
-            this->_is_wait_push_ack = true;
-            
         } else {
             packet = this->create_tcp_packet(TH_ACK, nullptr, payload_buf);
         }
@@ -122,7 +120,7 @@ pip_uint32 pip_tcp::_write(const void *bytes, pip_uint32 len, bool is_copy) {
 }
 
 pip_uint32 pip_tcp::_maximum_write_length() {
-    if (_is_wait_push_ack || _status != pip_tcp_status_established) {
+    if (_status != pip_tcp_status_established) {
         return 0;
     }
     
@@ -237,7 +235,6 @@ void pip_tcp::handle_ack(pip_uint32 ack, bool is_update_wind) {
             
             if (hdr->th_flags & TH_PUSH) {
                 has_push = true;
-                this->_is_wait_push_ack = false;
             }
         }
         
@@ -529,13 +526,15 @@ void pip_tcp::handle_input(struct tcphdr *hdr, const void *bytes, pip_uint16 dat
             pip_uint32 in_flight = this->_seq - seg_ack;
             this->_opp_wind = wnd > in_flight ? wnd - in_flight : 0;
             
-            is_update_wind = old_wind == 0 && this->_opp_wind > 0 && this->_is_wait_push_ack == false;
+            is_update_wind = old_wind == 0 && this->_opp_wind > 0;
             
+            // 连续发送时在途数据一直变化, 重复 ACK 需要比较对方通告的窗口而不是可用窗口
             bool is_dup_ack = seg_ack == una &&
                               datalen == 0 &&
                               !(hdr->th_flags & (TH_SYN | TH_FIN)) &&
                               !this->_packet_queue->empty() &&
-                              this->_opp_wind == old_wind;
+                              wnd == this->_opp_adv_wind;
+            this->_opp_adv_wind = wnd;
             if (is_dup_ack) {
                 this->_dup_ack_count += 1;
                 if (this->_dup_ack_count == 3 && !this->_in_recovery) {
@@ -547,6 +546,7 @@ void pip_tcp::handle_input(struct tcphdr *hdr, const void *bytes, pip_uint16 dat
     } else if (hdr->th_flags & TH_SYN) {
         // SYN 包的窗口不缩放
         this->_opp_wind = ntohs(hdr->th_win);
+        this->_opp_adv_wind = this->_opp_wind;
     }
     
     if (hdr->th_flags & TH_PUSH || datalen > 0) {

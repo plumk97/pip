@@ -12,12 +12,13 @@
 5. `closed`回调只有在调用过`set_arg`且`arg`不为空时才会触发; 主动调用`close()`/`reset()`不会触发`closed`回调
 6. 回调线程: 同一个TCP连接的回调按顺序串行执行, 不会并发, 但可能运行在调用`input`的线程或内部定时器线程上. 回调中可以调用该连接的接口(`write`/`received`/`close`等). 其它线程调用`close()`时, 正在执行中的回调仍会执行完, 之后不再触发新的回调
 7. `received`回调的数据、`output_ip_data_callback`的buf都只在回调期间有效, 需要异步使用时请在回调内复制
+8. TCP发送按对方通告窗口连续发送, `write`返回0表示对方窗口已满, 等待`written`回调后继续写入. 未实现拥塞控制, 适用于对端为本机协议栈(如utun/wintun)的场景, 不适合直接用于有丢包的真实链路
 
 ## 性能测试
 
 **测试平台**
 
-- OS: macOS 13.5.1
+- OS: macOS 27.0
 - CPU: Apple M2
 
 **测试流程**
@@ -35,31 +36,31 @@
 ```
 ~ iperf3 -c 192.168.33.2
 [ ID] Interval           Transfer     Bitrate         Retr
-[  5]   0.00-10.00  sec  8.82 GBytes  7.58 Gbits/sec    0             sender
-[  5]   0.00-10.00  sec  8.82 GBytes  7.58 Gbits/sec                  receiver
+[  5]   0.00-10.00  sec  6.15 GBytes  5.28 Gbits/sec    0             sender
+[  5]   0.00-10.00  sec  6.13 GBytes  5.27 Gbits/sec                  receiver
 ```
 
 **下载测试**
 ```
 ~ iperf3 -c 192.168.33.2 -R
 [ ID] Interval           Transfer     Bitrate         Retr
-[  5]   0.00-10.00  sec  7.52 GBytes  6.46 Gbits/sec    0             sender
-[  5]   0.00-10.00  sec  7.45 GBytes  6.40 Gbits/sec                  receiver
+[  5]   0.00-10.00  sec  14.1 GBytes  12.1 Gbits/sec    1             sender
+[  5]   0.00-10.00  sec  14.1 GBytes  12.1 Gbits/sec                  receiver
 
 ~ iperf3 -c 192.168.33.2 -R -P 5
 [ ID] Interval           Transfer     Bitrate         Retr
-[  5]   0.00-10.02  sec  3.21 GBytes  2.75 Gbits/sec    0             sender
-[  5]   0.00-10.00  sec  3.18 GBytes  2.74 Gbits/sec                  receiver
-[  8]   0.00-10.02  sec  3.22 GBytes  2.76 Gbits/sec    0             sender
-[  8]   0.00-10.00  sec  3.20 GBytes  2.75 Gbits/sec                  receiver
-[ 10]   0.00-10.02  sec  3.21 GBytes  2.75 Gbits/sec    0             sender
-[ 10]   0.00-10.00  sec  3.19 GBytes  2.74 Gbits/sec                  receiver
-[ 12]   0.00-10.02  sec  3.19 GBytes  2.73 Gbits/sec    0             sender
-[ 12]   0.00-10.00  sec  3.17 GBytes  2.72 Gbits/sec                  receiver
-[ 14]   0.00-10.02  sec  3.26 GBytes  2.80 Gbits/sec    0             sender
-[ 14]   0.00-10.00  sec  3.24 GBytes  2.78 Gbits/sec                  receiver
-[SUM]   0.00-10.02  sec  16.1 GBytes  13.8 Gbits/sec    0             sender
-[SUM]   0.00-10.00  sec  16.0 GBytes  13.7 Gbits/sec                  receiver
+[  5]   0.00-10.00  sec  3.97 GBytes  3.41 Gbits/sec    0             sender
+[  5]   0.00-10.00  sec  3.97 GBytes  3.41 Gbits/sec                  receiver
+[  7]   0.00-10.00  sec  3.99 GBytes  3.43 Gbits/sec    0             sender
+[  7]   0.00-10.00  sec  3.98 GBytes  3.42 Gbits/sec                  receiver
+[  9]   0.00-10.00  sec  3.99 GBytes  3.43 Gbits/sec    0             sender
+[  9]   0.00-10.00  sec  3.98 GBytes  3.42 Gbits/sec                  receiver
+[ 11]   0.00-10.00  sec  3.93 GBytes  3.37 Gbits/sec    0             sender
+[ 11]   0.00-10.00  sec  3.92 GBytes  3.36 Gbits/sec                  receiver
+[ 13]   0.00-10.00  sec  3.91 GBytes  3.36 Gbits/sec    0             sender
+[ 13]   0.00-10.00  sec  3.90 GBytes  3.35 Gbits/sec                  receiver
+[SUM]   0.00-10.00  sec  19.8 GBytes  17.0 Gbits/sec    0             sender
+[SUM]   0.00-10.00  sec  19.7 GBytes  17.0 Gbits/sec                  receiver
 ```
 
 ## Example

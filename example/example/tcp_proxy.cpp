@@ -161,7 +161,8 @@ void writer_loop(std::shared_ptr<session> s) {
 }
 
 void reader_loop(std::shared_ptr<session> s) {
-    std::vector<uint8_t> buffer(64 * 1024);
+    // 一次 write 的数据量越大, 越能填满对方窗口
+    std::vector<uint8_t> buffer(1024 * 1024);
     while (true) {
         ssize_t n = recv(s->fd, buffer.data(), buffer.size(), 0);
         if (n < 0 && errno == EINTR) {
@@ -179,7 +180,7 @@ void reader_loop(std::shared_ptr<session> s) {
                 continue;
             }
             
-            // 对方窗口已满或等待 PUSH 确认, 等 written 回调; 超时后重试一次兜底
+            // 对方窗口已满, 等 written 回调; 超时后重试一次兜底
             std::unique_lock<std::mutex> lock(s->mutex);
             s->cv.wait_for(lock, std::chrono::seconds(1), [&] { return s->writable || s->local_closed || s->closing; });
             if (s->local_closed || s->closing) {
